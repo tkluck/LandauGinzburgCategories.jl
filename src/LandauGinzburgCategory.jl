@@ -1,5 +1,10 @@
+@doc read(open(joinpath(@__DIR__, "..", "README.md")), String)
 module LandauGinzburgCategory
 
-greet() = print("Hello World!")
+include("Operations.jl")
+include("Library.jl")
+
+import .Operations: ⨷, ⨶, fuse, unit_matrix_factorization
+export ⨷, ⨶, fuse, unit_matrix_factorization
 
 end # module
