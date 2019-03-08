@@ -1,0 +1,4 @@
+name = "LandauGinzburgCategory"
+uuid = "2919f0de-3dc0-11e9-1e09-4f58dddf8718"
+authors = ["Timo Kluck <tkluck@infty.nl>"]
+version = "0.1.0"
