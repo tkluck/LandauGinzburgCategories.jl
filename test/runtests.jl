@@ -1,6 +1,6 @@
 using Test
 using PolynomialRings
-using LandauGinzburgCategory
+using LandauGinzburgCategories
 
 import LinearAlgebra: I
 

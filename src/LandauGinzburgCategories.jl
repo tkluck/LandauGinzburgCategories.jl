@@ -1,5 +1,5 @@
 @doc read(open(joinpath(@__DIR__, "..", "README.md")), String)
-module LandauGinzburgCategory
+module LandauGinzburgCategories
 
 include("Operations.jl")
 include("Library.jl")
