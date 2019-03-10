@@ -1,6 +1,7 @@
 module Operations
 
 import Combinatorics: permutations, parity
+import LinearAlgebra: I
 import SparseArrays: sparse
 
 import PolynomialRings: Polynomial, polynomial_ring
