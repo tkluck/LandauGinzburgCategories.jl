@@ -92,5 +92,6 @@ include("Library/CarquevilleRunkel2012.jl")
 include("Library/RecknagelWeinreb2017.jl")
 
 export orbifold_equivalence
+export TwoVariables
 
 end

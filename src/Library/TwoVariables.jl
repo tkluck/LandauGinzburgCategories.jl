@@ -25,7 +25,7 @@ end
 
 struct E₆ <: Potential{2}
     E₆() = E₆(leftvars(2)...)
-    E₆(x, y) = x^4 + y^4
+    E₆(x, y) = x^3 + y^4
 end
 
 struct E₇ <: Potential{2}
