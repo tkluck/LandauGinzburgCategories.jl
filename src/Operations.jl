@@ -142,24 +142,23 @@ function ⨶(A,B,W,vars...)
 end
 
 """
-    unit_matrix_factorization(f, source_vars, target_vars)
+    unit_matrix_factorization(f; source_to_target...)
 
-A ℤ/2-graded matrix that squares to `f(;source_vars .=> target_vars) - f` times
+A ℤ/2-graded matrix that squares to `f(;source_to_target...) - f` times
 the identity matrix.
 
 The source for this formulation is
 
 > Adjunctions and defects in Landau-Ginzburg models, Nils Carqueville and Daniel Murfet
 """
-function unit_matrix_factorization(f, source_vars, target_vars)
-    S, _ = polynomial_ring(source_vars..., target_vars...)
-    R = promote_type(S, typeof(f))
-    f = R(f)
+function unit_matrix_factorization(f; source_to_target...)
+    source_to_target = collect(source_to_target)
     function ∂(f, n)
-        for i in 1:n-1
-            f = f(; source_vars[i] => R(target_vars[i]))
-        end
-        return div(R(f - f(; source_vars[n] => R(target_vars[n]))), R(source_vars[n]) - R(target_vars[n]))
+        f₊ = f(; source_to_target[1:n - 1]...)
+        f₋ = f(; source_to_target[1:n    ]...)
+        x, y = source_to_target[n]
+        num = f₊ - f₋
+        return div(num, typeof(num)(x) - typeof(num)(y))
     end
 
     # x represents, through its bit-representation, a basis element of the exterior
@@ -168,7 +167,8 @@ function unit_matrix_factorization(f, source_vars, target_vars)
     #
     # The use of 'gray code' (see wikipedia) ensures that subsequent elements differ by
     # exactly one bit. This way, rows/columns of our result matrix have _alternating_ signs.
-    N = length(source_vars)
+    N = length(source_to_target)
+    R = promote_type(typeof(f), typeof(f(;source_to_target...)))
     gray_code(x) = xor(x, x>>1)
     permutation = map(n->gray_code(n)+1, 0:2^N-1)
     inv_perm = invperm(permutation)
@@ -198,8 +198,10 @@ function unit_matrix_factorization(f, source_vars, target_vars)
         return result
     end
 
-    delta_plus = sum( ∂(f, i) * wedge_product_matrix(R, i) for i=1:N )
-    delta_minus = sum( (R(source_vars[i]) - R(target_vars[i])) * lift_matrix(R, i) for i = 1:N )
+    delta_plus = sum(∂(f, i) * wedge_product_matrix(R, i)
+                     for i=1:N)
+    delta_minus = sum((R(x) - R(y)) * lift_matrix(R, i)
+                      for (i,(x,y)) in enumerate(source_to_target))
     return from_alternating_grades(delta_plus + delta_minus)
 end
 
@@ -404,7 +406,7 @@ end
 function getpotential(A::AbstractMatrix)
     A_sq = A^2
     f = A_sq[1,1]
-    A_sq == f*one(A_sq) || throw(ArgumentError("getpotential() needs a matrix factorization"))
+    A_sq == f*I || throw(ArgumentError("getpotential() needs a matrix factorization"))
     return f
 end
 
@@ -436,7 +438,22 @@ function find_zero_in_small_fractions(f, df, x0)
     return nothing
 end
 
-function fuse(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_to_fuse...)
+function find_analytic_equality(f, y, df, x0)
+    max_loops = 7
+    x = x0
+    for _ in 1:max_loops
+        f_x = f(x)
+        f_x ≈ y && return x
+        # Newton's method
+        δx = matrix_solve_affine(δx->df(x,δx), f_x - y, size(x))
+        x = x - δx
+    end
+    return nothing
+end
+
+signedpermutations(A) = (((-1)^parity(σ), σ) for σ in permutations(eachindex(A)))
+
+function fuse_abstract(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_to_fuse...)
     vars_to_fuse = [var_to_fuse; vars_to_fuse...]
     R = promote_type(eltype(A), eltype(B))
     Q = A⨶B
@@ -447,37 +464,54 @@ function fuse(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_to_fuse...
     ∇B = [diff(B, v) for v in vars_to_fuse]
     gr, tr = gröbner_transformation(∇f)
 
-    var_data = map(enumerate(vars_to_fuse)) do x
-        i,v = x
+    var_data = map(vars_to_fuse) do v
         pow = 1
         while !iszero(rem(R(v)^pow, gr))
             pow += 1
-            pow > 30 && throw(ArgumentError("Power for computing Jacobian is too high; exiting"))
+            pow > 30 && error("Power for computing Jacobian is too high; exiting")
         end
         lift = div(R(v)^pow, gr)*tr
         λ = one(A)⨷sum(prod, zip(lift, ∇B))
-        t = Symbol("t$i")
+        t = gensym()
         (v, pow, t, λ)
     end
 
-    inflate(M) = foldl((x,f)->f(x), [x->matrix_over_subring(x, v, pow, t) for (v, pow, t, λ) in var_data], init=M)
-    p(x) = x(; [t=>0 for (v, pow, t, λ) in var_data]...)
+    function inflate(M)
+        for (v, pow, t, λ) in var_data
+            M = matrix_over_subring(M, v, pow, t)
+        end
+        M
+    end
+    function p(x)
+        for (v, pow, t, λ) in var_data
+            x = x(; t => 0)
+        end
+        x
+    end
 
     QQ = inflate(Q)
-    At = -sum(σ-> (-1)^parity(σ) * prod(diff(QQ, t) for (v, pow, t, λ) in var_data[σ]), permutations(eachindex(var_data)))//factorial(length(var_data))
+    At = -sum(ε * prod(diff(QQ, t) for (v, pow, t, λ) in var_data[σ])
+              for (ε, σ) in signedpermutations(var_data))//factorial(length(var_data))
     λλ = inflate(prod(λ for (v, pow, t, λ) in var_data))
     e = (-1)^length(var_data) * p(λλ * At)
     QQQ = p(QQ)
 
-    e, QQQ = sparse.((e,QQQ))
+    return QQQ, e
+end
+
+function fuse(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_to_fuse...)
+    R = promote_type(eltype(A), eltype(B))
+    QQQ, e = fuse_abstract(A, B, var_to_fuse, vars_to_fuse)
+    QQQ = sparse(QQQ)
+    e = sparse(e)
 
     h = matrix_solve_affine(h->QQQ*h + h*QQQ, e^2 - e, size(QQQ))
-    h === nothing && throw(ArgumentError("Failed to strictify e: not idempotent"))
+    @assert h != nothing "e should be idempotent up to homotopy"
 
     f(b) = -b + h + e*b + b*e + (b^2*QQQ + QQQ*b^2)//2 + b*QQQ*b
     df(b, xi) = -xi + e*xi + xi*e + ((b*xi + xi*b)*QQQ + QQQ*(b*xi + xi*b))//2 + xi*QQQ*b + b*QQQ*xi
-    b = find_zero_in_small_fractions(f, df, zero(h))
-    b === nothing && throw(ArgumentError("Failed to strictify e: no idempotent in small fractions"))
+    b = find_analytic_zero(f, df, zero(h))
+    b === nothing && error("Failed to strictify e")
     e_strict = e + QQQ*b + b*QQQ
     @assert e_strict^2 == e_strict
 

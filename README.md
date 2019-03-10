@@ -19,12 +19,12 @@ julia> using LandauGinzburgCategories, PolynomialRings
 
 julia> @ring! ℚ[x,y,z]
 
-julia> A = unit_matrix_factorization(x^2, [:x], [:y])
-2×2 Arrax{ℚ[x,x,y],2}:
+julia> A = unit_matrix_factorization(x^2, x = y)
+2×2 Arrax{ℚ[x,y,z],2}:
  0       x^2 + x*y + y^2
  -x + y  0
 
-julia> B = unit_matrix_factorization(y^2, [:y], [:z])
+julia> B = unit_matrix_factorization(y^2, y = z)
 2×2 Array{ℚ[x,y,z],2}:
  0       y^2 + y*z + z^2
  -y + z  0
@@ -38,7 +38,7 @@ julia> A ⨶ B
 
 
 julia> fuse(A ⨶ B, :y)
-2×2 Arrax{ℚ[x,x,z],2}:
+2×2 Arrax{ℚ[x,y,z],2}:
  0       x^2 + x*z + z^2
  -x + z  0
 ```
@@ -72,9 +72,7 @@ Et cetera.
 Known orbifold equivalences:
 
 ```julia
-julia> @ring! ℚ[x,y,u,v];
-
-julia> LGLib.orbifold_equivalence(LGLib.A5, LGLib.A2A2, [x, y], [u, v])
+julia> LGLib.orbifold_equivalence(LGLib.A5, LGLib.A2A2)
 .....
 
 ```
