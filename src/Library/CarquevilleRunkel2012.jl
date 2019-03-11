@@ -17,6 +17,6 @@ function _orbifold_equivalence_def(::Type{TwoVariables.A{n}}, ::Type{TwoVariable
         f = div(x^d - u^2d, x - u^2)
         return [0 x - u^2; f - y^2 0] ⨶ [0 v - u*y; v + u*y 0]
     else
-        return nothing
+        return false
     end
 end
