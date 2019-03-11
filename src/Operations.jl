@@ -377,6 +377,14 @@ function (op::ColSwap)(M::AbstractMatrix)
     res
 end
 
+"""
+    Q′ = dual(Q)
+
+Return the dual (i.e. the adjoint) matrix factorization of `Q`.
+
+If `Q` factors the potential `f`, then this is a matrix factorization that
+factors `-f`.
+"""
 function dual(M::AbstractMatrix)
     n, m = size(M)
     (n == m && n%2 == 0) || throw(ArgumentError("Need square, even-rank matrix for applying MatrixFactorizations.dual"))
@@ -454,6 +462,9 @@ end
 
 signedpermutations(A) = (((-1)^parity(σ), σ) for σ in permutations(eachindex(A)))
 
+"""
+    docstring goes here
+"""
 function fuse_abstract(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_to_fuse...)
     vars_to_fuse = [var_to_fuse; vars_to_fuse...]
     R = promote_type(eltype(A), eltype(B))
@@ -500,6 +511,9 @@ function fuse_abstract(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_t
     return QQQ, e
 end
 
+"""
+    docstring goes here
+"""
 function fuse(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_to_fuse...)
     R = promote_type(eltype(A), eltype(B))
     QQQ, e = fuse_abstract(A, B, var_to_fuse, vars_to_fuse)

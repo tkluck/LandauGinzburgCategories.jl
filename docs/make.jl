@@ -1,7 +1,10 @@
 using Documenter, LandauGinzburgCategories
 
 makedocs(
-    modules  = [LandauGinzburgCategories],
+    modules  = [
+        LandauGinzburgCategories,
+        LandauGinzburgCategories.Library,
+    ],
     repo     = "https://github.com/tkluck/LandauGinzburgCategories.jl.git",
     doctest  = true,
     sitename = "LandauGinzburgCategories.jl",

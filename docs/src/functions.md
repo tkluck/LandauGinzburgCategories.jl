@@ -3,11 +3,14 @@
 ## Operations
 
 ```@docs
-\Otimes
-\otimeshat
-unit_matrix_factorization
+⨷
+⨶
+centralcharge
 dual
+find_quasihomogeneous_degrees
 fuse
+fuse_abstract
+unit_matrix_factorization
 ```
 
 ## Library
