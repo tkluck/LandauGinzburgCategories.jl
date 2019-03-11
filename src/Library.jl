@@ -84,7 +84,7 @@ end
 function _orbifold_equivalence_def(::Type{P}, ::Type{P}, left_vars, right_vars) where P <: Potential
     # self-equivalence
     n = numvars(P)
-    xsyms = [Symbol("x", i) for i in 1:n]
+    xsyms = [Symbol("x", i) for i in 1:n] # TODO: needs gensym() or some such
     _, xvals = polynomial_ring(xsyms...)
     res = unit_matrix_factorization(P(xvals...); (xsyms .=> right_vars)...)
     res = res(; (xsyms .=> left_vars)...)
