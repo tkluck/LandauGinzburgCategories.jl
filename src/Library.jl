@@ -7,6 +7,15 @@ import PolynomialRings: @ring!, @ring, polynomial_ring
 import ..QuasiHomogeneous: centralcharge
 import ..Operations: unit_matrix_factorization, dual
 
+"""
+    Potential{NumVars}
+
+A type representing a potential through a classification scheme.
+For example, the potential ``x^4 - y^2`` is called ``A_3`` through
+the ADE classification of unimodular potentials, and it is
+represented in Julia by the type `TwoVariables.A₃`. This is a subtype
+of `Potential{2}`.
+"""
 abstract type Potential{NumVars} end
 numvars(::Type{<:Potential{NumVars}}) where NumVars = NumVars
 numvars(f::Potential) = numvars(typeof(f))

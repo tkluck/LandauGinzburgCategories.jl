@@ -17,5 +17,11 @@ unit_matrix_factorization
 
 ```@docs
 orbifold_equivalence
-Potential
+LandauGinzburgCategories.Library.Potential
+```
+
+## Internal functions
+```@docs
+LandauGinzburgCategories.Operations.flatten_blocks
+LandauGinzburgCategories.Operations.block_diagonalization
 ```

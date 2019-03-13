@@ -1,4 +1,6 @@
-using Documenter, LandauGinzburgCategories
+using Documenter
+using LandauGinzburgCategories
+using LandauGinzburgCategories.Library
 
 makedocs(
     modules  = [
