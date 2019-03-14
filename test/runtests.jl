@@ -26,7 +26,7 @@ import LinearAlgebra: I
         Q = orbifold_equivalence(TwoVariables.A{9}, TwoVariables.D{6}, [x, y], [u, v])
         @test Q^2 == (TwoVariables.D{6}(u, v) - TwoVariables.A{9}(x, y))*I
 
-        @test nothing == orbifold_equivalence(TwoVariables.A{6}, TwoVariables.D{6})
+        @test false == orbifold_equivalence(TwoVariables.A{6}, TwoVariables.D{6})
 
     end
 end
