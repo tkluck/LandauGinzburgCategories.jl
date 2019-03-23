@@ -1,7 +1,6 @@
 module TwoVariables
 
 import ...Library: Potential, subscript, leftvars, rightvars
-import ...Library: orbifold_equivalence
 
 struct A{N} <: Potential{2}
     A{n}()     where n = A{n}(leftvars(2)...)
@@ -38,9 +37,19 @@ struct E₈ <: Potential{2}
     E₈(x, y) = x^3 + y^5
 end
 
+struct E₁₃ <: Potential{2}
+    E₁₃() = E₁₃(leftvars(2)...)
+    E₁₃(x, y) = y^3 + y*x^5
+end
+
 struct A₂A₂ <: Potential{2}
     A₂A₂() = A₂A₂(leftvars(2)...)
     A₂A₂(x, y) = x^3 + y^3
+end
+
+struct Z₁₁ <: Potential{2}
+    Z₁₁() = Z₁₁(leftvars(2)...)
+    Z₁₁(x, y) = x^3*y + y^5
 end
 
 end

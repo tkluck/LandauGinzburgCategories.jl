@@ -80,15 +80,23 @@ function orbifold_equivalence(f::Type{<:Potential}, g::Type{<:Potential}, left_v
         end
     end
     if ismissing(res)
-        if centralcharge(f(), leftsyms(f)...) != centralcharge(g(), leftsyms(g)...)
+        if centralcharge(f) != centralcharge(g)
             res = false
         end
     end
-    @assert ismissing(res) || res === false ||
-            res^2 == (g(right_vars...) - f(left_vars...))*I "Library contains invalid orbifold equivalence for $f and $g. Please open an issue at https://github.com/tkluck/LandauGinzburgCategories.jl/issues/new"
+    if !ismissing(res) && res !== false
+        res_sq = res^2
+        target = eltype(res_sq)(g(right_vars...) - f(left_vars...))
+        if res_sq != target * I
+            @error "Library contains invalid orbifold equivalence for $f and $g. Please open an issue at https://github.com/tkluck/LandauGinzburgCategories.jl/issues/new" res_sq[1,1] target
+            error()
+        end
+    end
 
     return res
 end
+
+centralcharge(::Type{P}) where P <: Potential = centralcharge(P(leftvars(P)...), leftsyms(P)...)
 
 function _orbifold_equivalence_def(::Type{P}, ::Type{P}, left_vars, right_vars) where P <: Potential
     # self-equivalence
@@ -100,10 +108,12 @@ function _orbifold_equivalence_def(::Type{P}, ::Type{P}, left_vars, right_vars) 
 end
 
 include("Library/TwoVariables.jl")
+include("Library/ThreeVariables.jl")
 include("Library/CarquevilleRunkel2012.jl")
 include("Library/RecknagelWeinreb2017.jl")
+include("Library/NewtonRosCamacho2015.jl")
 
 export orbifold_equivalence
-export TwoVariables
+export TwoVariables, ThreeVariables
 
 end

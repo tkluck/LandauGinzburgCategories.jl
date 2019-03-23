@@ -4,7 +4,8 @@ import SparseArrays: spzeros
 import LinearAlgebra: det, diagind, I
 
 import PolynomialRings: base_extend, coefficient, gröbner_transformation
-import PolynomialRings: constant_coefficient
+import PolynomialRings: constant_coefficient, flat_coefficients, Ideal
+import PolynomialRings: expansion
 
 import ..Operations: supertrace, getpotential
 
@@ -89,7 +90,28 @@ function quantum_dimension(Q::AbstractMatrix, W, left_vars, right_vars)
     return ϵ * constant_coefficient(multivariate_residue(g, f, left_vars...), right_vars...)
 end
 
+function materialize_ansatz(Q, f, vars...)
+    shouldvanish = Q^2 - f*I
+
+    iszero(shouldvanish) && return Q
+
+    eqns = flat_coefficients(shouldvanish, vars...)
+    P = eltype(eqns)
+    J = Ideal(eqns)
+    R = P/J
+
+    if iszero(one(R))
+        @error("Cannot materialize ansatz: it yields no solutions",
+            expansion((Q^2)[1,1] - f, vars...),
+        )
+        error()
+    end
+
+    return base_extend(Q, R)
+end
+
 export supertrace, multivariate_residue, quantum_dimension, quantum_dimensions
+export materialize_ansatz
 
 
 end
