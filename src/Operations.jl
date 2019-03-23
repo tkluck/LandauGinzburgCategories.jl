@@ -1,7 +1,7 @@
 module Operations
 
 import Combinatorics: permutations, parity
-import LinearAlgebra: I
+import LinearAlgebra: I, diagind
 import SparseArrays: sparse
 
 import PolynomialRings: Polynomial, polynomial_ring
@@ -96,6 +96,20 @@ function ⨷(A,B)
         end
     end
     return from_alternating_grades(flatten_blocks(res))
+end
+
+"""
+    t = supertrace(Q::AbstractMatrix)
+
+Trace of a of ℤ/2-graded block matrix with the Koszul sign convention.
+"""
+function supertrace(Q::AbstractMatrix)
+    n,m = size(Q)
+    n == m && n%2 ==0 || throw(ArgumentError("Cannot compute supertrace of $n x $m matrix"))
+
+    firsthalf = diagind(Q)[1:end÷2]
+    secondhalf = diagind(Q)[end÷2+1:end]
+    return sum(i->Q[i], firsthalf) - sum(i->Q[i], secondhalf)
 end
 
 """
