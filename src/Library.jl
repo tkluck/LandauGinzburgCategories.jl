@@ -85,7 +85,7 @@ function orbifold_equivalence(f::Type{<:Potential}, g::Type{<:Potential}, left_v
         end
     end
     @assert ismissing(res) || res === false ||
-            res^2 == (g(right_vars...) - f(left_vars...))*I "Library contains invalid orbifold equivalence for $f and $g. Please open an issue at github.com/tkluck/LandauGinzburgCategory.jl"
+            res^2 == (g(right_vars...) - f(left_vars...))*I "Library contains invalid orbifold equivalence for $f and $g. Please open an issue at https://github.com/tkluck/LandauGinzburgCategories.jl/issues/new"
 
     return res
 end
