@@ -6,14 +6,14 @@ Orbifold equivalences from
 > arXiv preprint arXiv:1708.08359 (2017).
 """
 
-import PolynomialRings: Ideal, map_coefficients, base_extend
+import PolynomialRings: Ideal, base_extend
 
 function _orbifold_equivalence_def(::Type{TwoVariables.A₂A₂}, ::Type{TwoVariables.A₅}, left_vars, right_vars)
-    R = @ring! Int[a[]][x,y,u,v]
+    C = Complex{Int}
+    R = @ring! C[α, β][x,y,u,v]
 
     # compatibility with copy-pasted notation below
-    A = a
-    a(i) = A[i]
+    a(i) = [α, β][i]
     lookup = Dict(1:4 .=> (u,im*v,x,y)) # note sign difference in convention for A₅
     x(i) = lookup[i]
     # from https://nms.kcl.ac.uk/andreas.recknagel/oeq-page/defectslistforweb.txt
@@ -31,10 +31,10 @@ function _orbifold_equivalence_def(::Type{TwoVariables.A₂A₂}, ::Type{TwoVari
     Q = Q(x=left_vars[1], y=left_vars[2], u=right_vars[1], v=right_vars[2])
 
     # quotient out the equations resulting from imposing Q^2 == f - g
-    S′ = @ring! Int[a[]]
+    S′ = @ring! Int[α, β]
     eqns = [
-         -a[1]^2 + 3a[2]^2
-        -4a[2]^3 + 1
+         -α^2 + 3β^2
+        -4β^3 + 1
     ]
 
     S = S′/Ideal(eqns)
