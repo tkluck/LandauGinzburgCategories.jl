@@ -61,7 +61,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Getting Started",
     "title": "Installation",
     "category": "section",
-    "text": "Refer to the Julia website for details on installing Julia. As soon as you have, start it and runjulia> Pkg.add(\"https://github.com/tkluck/LandauGinzburgCategories.jl\")to install LandauGinzburgCategories and its dependencies. To test whether it worked, typeusing LandauGinzburgCategories.Library\norbifold_equivalence(TwoVariables.A{9}, TwoVariables.D{6})If you see a matrix factorization, the installation worked!"
+    "text": "Refer to the Julia website for details on installing Julia. As soon as you have, start it and type [ to get in package mode. Then, run(v1.1) pkg> add https://github.com/tkluck/LandauGinzburgCategories.jlto install LandauGinzburgCategories and its dependencies. To test whether it worked, typeusing LandauGinzburgCategories.Library\norbifold_equivalence(TwoVariables.A{9}, TwoVariables.D{6})If you see a matrix factorization, the installation worked!"
 },
 
 {
