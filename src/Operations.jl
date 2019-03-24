@@ -2,11 +2,12 @@ module Operations
 
 import Combinatorics: permutations, parity
 import LinearAlgebra: I, diagind
-import SparseArrays: sparse
+import SparseArrays: sparse, spzeros
 
 import PolynomialRings: Polynomial, polynomial_ring
 import PolynomialRings: constant_coefficient, gröbner_transformation
-import PolynomialRings: map_coefficients
+import PolynomialRings: map_coefficients, base_extend
+import PolynomialRings: ofminring, minring
 import PolynomialRings.Expansions: _expansion_types, expansion
 import PolynomialRings.QuotientRings: QuotientRing
 import PolynomialRings.MonomialOrderings: MonomialOrder
@@ -413,17 +414,17 @@ function matrix_over_subring(M::AbstractMatrix, var, exp, substitution_var)
     _, P = _expansion_types(eltype(M), MonomialOrder{:degrevlex, Named{(var,)}}())
     R, (substitution_var_val,) = polynomial_ring(substitution_var, basering=Int)
     S = promote_type(P, R)
-    blocks = map(M) do f
-        res = zeros(S, exp, exp)
-        for ((n,),c) in expansion(f, var)
+    res = spzeros(S, (exp .* size(M))...)
+    for row = axes(M, 1), col = axes(M, 2)
+        curblock = @view res[(row-1)*exp+1:row*exp, (col-1)*exp+1:col*exp]
+        for ((n,),c) in expansion(M[row, col], var)
             for i = 0:exp-1
                 j = mod(i+n, exp)
-                res[j+1,i+1] += c*substitution_var_val^((n + i - j)÷exp)
+                curblock[j+1, i+1] += c*substitution_var_val^((n + i - j)÷exp)
             end
         end
-        res
     end
-    return flatten_blocks(blocks)
+    return res
 end
 
 function getpotential(A::AbstractMatrix)
@@ -481,11 +482,12 @@ signedpermutations(A) = (((-1)^parity(σ), σ) for σ in permutations(eachindex(
 """
 function fuse_abstract(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_to_fuse...)
     vars_to_fuse = [var_to_fuse; vars_to_fuse...]
-    R = promote_type(eltype(A), eltype(B))
     Q = A⨶B
 
     W, V = getpotential.((A,B))
     f = V - constant_coefficient(V, vars_to_fuse...)
+    f = ofminring(f)
+    R = base_extend(typeof(f))
     ∇f = [diff(f, v) for v in vars_to_fuse]
     ∇B = [diff(B, v) for v in vars_to_fuse]
     gr, tr = gröbner_transformation(∇f)
@@ -508,12 +510,7 @@ function fuse_abstract(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_t
         end
         M
     end
-    function p(x)
-        for (v, pow, t, λ) in var_data
-            x = x(; t => 0)
-        end
-        x
-    end
+    p(x) = x(; [t => 0 for (v, pow, t, λ) in var_data]...)
 
     QQ = inflate(Q)
     At = -sum(ε * prod(diff(QQ, t) for (v, pow, t, λ) in var_data[σ])
