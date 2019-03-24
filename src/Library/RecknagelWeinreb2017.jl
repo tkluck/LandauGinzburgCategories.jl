@@ -212,7 +212,6 @@ function _orbifold_equivalence_def(f::Type{ThreeVariables.W₁₃{:v1}}, g::Type
 end
 
 function _orbifold_equivalence_def(f::Type{TwoVariables.E₁₃}, g::Type{TwoVariables.Z₁₁}, left_vars, right_vars)
-    @warn "This orbifold equivalence is known to contain a loooong computation."
     R = @ring! ℚ[a[1:7]][x,y,u,v]
 
     # compatibility with notation below
