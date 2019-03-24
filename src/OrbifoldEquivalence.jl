@@ -5,7 +5,6 @@ import LinearAlgebra: det, diagind, I
 
 import PolynomialRings: base_extend, coefficient, gröbner_transformation
 import PolynomialRings: constant_coefficient, flat_coefficients, Ideal
-import PolynomialRings: expansion
 
 import ..Operations: supertrace, getpotential
 
@@ -101,10 +100,7 @@ function materialize_ansatz(Q, f, vars...)
     R = P/J
 
     if iszero(one(R))
-        @error("Cannot materialize ansatz: it yields no solutions",
-            expansion((Q^2)[1,1] - f, vars...),
-        )
-        error()
+        error("Cannot materialize ansatz: it yields no solutions")
     end
 
     return base_extend(Q, R)
