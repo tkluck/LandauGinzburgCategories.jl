@@ -112,8 +112,10 @@ include("Library/ThreeVariables.jl")
 include("Library/CarquevilleRunkel2012.jl")
 include("Library/RecknagelWeinreb2017.jl")
 include("Library/NewtonRosCamacho2015.jl")
+include("Library/Interactive.jl")
 
 export orbifold_equivalence
 export TwoVariables, ThreeVariables
+export choose_equivalence
 
 end
