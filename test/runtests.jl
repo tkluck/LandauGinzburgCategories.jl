@@ -29,13 +29,15 @@ import LinearAlgebra: I
 
         @test false == orbifold_equivalence(TwoVariables.A{6}, TwoVariables.D{6})
 
-        for constructor in last.(LandauGinzburgCategories.Library.WellKnownEquivalences)
-            method = methods(constructor).ms[1]
-            if method.nargs == 1
-                @test constructor() isa AbstractMatrix
-            else
-                for n = 3:10
-                    @test constructor(n) isa AbstractMatrix
+        for (name, closure) in LandauGinzburgCategories.Library.WellKnownEquivalences
+            @testset "$name" begin
+                method = methods(closure).ms[1]
+                if method.nargs == 1
+                    @test orbifold_equivalence(closure()...) isa AbstractMatrix
+                else
+                    for n = 3:10
+                        @test orbifold_equivalence(closure(n)...) isa AbstractMatrix
+                    end
                 end
             end
         end
