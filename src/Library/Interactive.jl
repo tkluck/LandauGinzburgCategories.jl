@@ -7,6 +7,18 @@ const WellKnownEquivalences = [
     "A₂ × A₂ ≃ A₅ (Recknagel Weinreb 2017)" => function()
         orbifold_equivalence(TwoVariables.A₂A₂, TwoVariables.A₅)
     end,
+    "A₂ × A₂ ≃ A₅ (Recknagel Weinreb 2017)" => function()
+        orbifold_equivalence(TwoVariables.A₂A₂, TwoVariables.A₅)
+    end,
+    "D₇ ≃ E₆ (Recknagel Weinreb 2017)" => function()
+        orbifold_equivalence(TwoVariables.D₇, TwoVariables.E₆)
+    end,
+    "D₁₀ ≃ E₇ (Recknagel Weinreb 2017)" => function()
+        orbifold_equivalence(TwoVariables.D₁₀, TwoVariables.E₇)
+    end,
+    "D₁₆ ≃ E₈ (Recknagel Weinreb 2017)" => function()
+        orbifold_equivalence(TwoVariables.D₁₆, TwoVariables.E₈)
+    end,
 ]
 
 function choose_equivalence()
