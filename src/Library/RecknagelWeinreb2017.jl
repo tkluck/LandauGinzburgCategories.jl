@@ -44,7 +44,7 @@ function _orbifold_equivalence_def(f::Type{TwoVariables.A₂A₂}, g::Type{TwoVa
 end
 
 function _orbifold_equivalence_def(f::Type{TwoVariables.D₇}, g::Type{TwoVariables.E₆}, left_vars, right_vars)
-    R = @ring! ℚ[a[]][x,y,u,v]
+    R = @ring! ℚ[a[1:2]][x,y,u,v]
 
     # compatibility with copy-pasted notation below
     A = a
@@ -82,7 +82,7 @@ function _orbifold_equivalence_def(f::Type{TwoVariables.D₇}, g::Type{TwoVariab
 end
 
 function _orbifold_equivalence_def(f::Type{TwoVariables.D₁₀}, g::Type{TwoVariables.E₇}, left_vars, right_vars)
-    R = @ring! ℚ[a[]][x,y,u,v]
+    R = @ring! ℚ[a[1:3]][x,y,u,v]
 
     # compatibility with copy-pasted notation below
     A = a
