@@ -41,6 +41,12 @@ const WellKnownEquivalences = [
     end,
 ]
 
+const Positions = [
+    "Left => Right" => (leftvars, rightvars),
+    "Left => Middle" => (leftvars, middlevars),
+    "Middle => Right" => (middlevars, rightvars),
+]
+
 function choose_equivalence()
     println("Please select one of these orbifold equivalences: ")
     options = first.(WellKnownEquivalences)
@@ -56,5 +62,10 @@ function choose_equivalence()
         potentials = closure(n)
     end
     f, g = potentials
-    return orbifold_equivalence(f, g)
+
+    println("Please select the how you intend to compose this equivalence: ")
+    options = first.(Positions)
+    ix = request(RadioMenu(options))
+    leftvars, rightvars = last(Positions[ix])
+    return orbifold_equivalence(f, g, leftvars(f), rightvars(f))
 end

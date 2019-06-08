@@ -25,13 +25,21 @@ subscript(a) = Symbol(a)
 subscript(a...) = Symbol(join(map(subscript, a)))
 subscript(n::Integer) = Symbol(reverse(join(_subscripts[i] for i in digits(n))))
 
-leftsyms(f::Type{<:Potential})  = leftsyms(numvars(f))
-rightsyms(f::Type{<:Potential}) = rightsyms(numvars(f))
+leftsyms(f::Type{<:Potential})   = leftsyms(numvars(f))
+middlesyms(f::Type{<:Potential}) = middlesyms(numvars(f))
+rightsyms(f::Type{<:Potential})  = rightsyms(numvars(f))
 
 function leftsyms(n::Integer)
     n == 1 && return (:x,)
     n == 2 && return (:x, :y)
     n == 3 && return (:x, :y, :z)
+    error("Not implemented")
+end
+
+function middlesyms(n::Integer)
+    n == 1 && return (:s,)
+    n == 2 && return (:s, :t)
+    n == 3 && return (:s, :t, :r)
     error("Not implemented")
 end
 
@@ -44,6 +52,11 @@ end
 
 function leftvars(spec)
     _, vars = polynomial_ring(leftsyms(spec)...)
+    return vars
+end
+
+function middlevars(spec)
+    _, vars = polynomial_ring(middlesyms(spec)...)
     return vars
 end
 
@@ -116,6 +129,8 @@ include("Library/Interactive.jl")
 
 export orbifold_equivalence
 export TwoVariables, ThreeVariables
+export leftsyms, middlesyms, rightsyms
+export leftvars, middlevars, rightvars
 export choose_equivalence
 
 end
