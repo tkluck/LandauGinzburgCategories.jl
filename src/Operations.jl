@@ -69,7 +69,7 @@ associativity.)
 function ⨷(A,B)
     n,m = size(A)
     k,l = size(B)
-    n%2 == m%2 == k%2 == l%2 == 0 || throw(ValueError("Need ℤ/2 graded matrices, even rank and corank"))
+    all(iseven, (n,m,k,l)) || throw(ValueError("Need ℤ/2 graded matrices, even rank and corank"))
 
     A,B = to_alternating_grades.((A,B))
 
@@ -79,7 +79,7 @@ function ⨷(A,B)
         inner = res[row,col]
         for inner_row in axes(inner,1), inner_col in axes(inner,2)
             # Koszul signs; see formula in the documentation string
-            if col%2 == 0 && (inner_row+inner_col)%2 == 1
+            if iseven(col) && isodd(inner_row + inner_col)
                 inner[inner_row, inner_col] *= -1
             end
         end
@@ -89,10 +89,10 @@ function ⨷(A,B)
         # adjacent rows/columns have the same sign. We can fix this by reversing
         # the rows/columns within an inner matrix, depending on the sign of the
         # outer row/column.
-        if row%2 == 0
+        if iseven(row)
             inner[:,:] = inner[end:-1:1,:]
         end
-        if col%2 == 0
+        if iseven(col)
             inner[:,:] = inner[:,end:-1:1]
         end
     end
@@ -106,7 +106,7 @@ Trace of a of ℤ/2-graded block matrix with the Koszul sign convention.
 """
 function supertrace(Q::AbstractMatrix)
     n,m = size(Q)
-    n == m && n%2 ==0 || throw(ArgumentError("Cannot compute supertrace of $n x $m matrix"))
+    n == m && iseven(n) || throw(ArgumentError("Cannot compute supertrace of $n x $m matrix"))
 
     firsthalf = diagind(Q)[1:end÷2]
     secondhalf = diagind(Q)[end÷2+1:end]
@@ -314,7 +314,7 @@ end
 
 function (op::RowOp)(M::AbstractMatrix)
     n, m = size(M)
-    (n == m && n%2 == 0) || throw(ArgumentError("Need square, even-rank matrix for applying MatrixFactorizations.RowOp"))
+    (n == m && iseven(n) || throw(ArgumentError("Need square, even-rank matrix for applying MatrixFactorizations.RowOp"))
     res = copy(M)
     if op.source_row == 0
         res[op.target_row,:] *= op.target_factor
@@ -343,7 +343,7 @@ end
 
 function (op::ColOp)(M::AbstractMatrix)
     n, m = size(M)
-    (n == m && n%2 == 0) || throw(ArgumentError("Need square, even-rank matrix for applying MatrixFactorizations.ColOp"))
+    (n == m && iseven(n) || throw(ArgumentError("Need square, even-rank matrix for applying MatrixFactorizations.ColOp"))
     res = copy(M)
     if op.source_col == 0
         res[:,op.target_col] *= op.target_factor
@@ -402,7 +402,7 @@ factors `-f`.
 """
 function dual(M::AbstractMatrix)
     n, m = size(M)
-    (n == m && n%2 == 0) || throw(ArgumentError("Need square, even-rank matrix for applying MatrixFactorizations.dual"))
+    (n == m && iseven(n) || throw(ArgumentError("Need square, even-rank matrix for applying MatrixFactorizations.dual"))
 
     [
        M[1:end÷2, 1:end÷2]     M[end÷2+1:end, 1:end÷2]    ;
