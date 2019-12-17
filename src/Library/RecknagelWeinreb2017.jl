@@ -205,9 +205,6 @@ function _orbifold_equivalence_def(f::Type{ThreeVariables.W₁₃{:v1}}, g::Type
         Q[8,4]=-x(1)*x(6)-x(4);
     end
 
-    # express in the user's variables
-    Q = Q(x=left_vars[1], y=left_vars[2], u=right_vars[1], v=right_vars[2])
-
     return Q
 end
 

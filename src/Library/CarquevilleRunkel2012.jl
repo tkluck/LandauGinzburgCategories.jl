@@ -1,9 +1,15 @@
 """
-Orbifold equivalences from
+Orbifold equivalences from (for small n)
 
 > Orbifold completion of defect bicategories
 > Nils Carqueville, Ingo Runkel
 > http://arxiv.org/abs/1210.6363v4
+
+And for general n from
+
+> Orbifold equivalent potentials
+> Nils Carqueville, Ana Ros Camacho, Ingo Runkel
+> https://arxiv.org/abs/1311.3354
 """
 
 import ...Operations: ⨷, ⨶

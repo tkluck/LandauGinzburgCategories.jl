@@ -7,9 +7,6 @@ const WellKnownEquivalences = [
     "A₂ × A₂ ≃ A₅ (Recknagel - Weinreb 2017)" => function()
         TwoVariables.A₂A₂, TwoVariables.A₅
     end,
-    "A₂ × A₂ ≃ A₅ (Recknagel - Weinreb 2017)" => function()
-        TwoVariables.A₂A₂, TwoVariables.A₅
-    end,
     "D₇ ≃ E₆ (Recknagel - Weinreb 2017)" => function()
         TwoVariables.D₇, TwoVariables.E₆
     end,
@@ -30,21 +27,48 @@ const WellKnownEquivalences = [
     "Q₁₁ ≃ Z₁₃ (Recknagel - Weinreb 2017)" => function()
         ThreeVariables.Q₁₁, ThreeVariables.Z₁₃{:v1}
     end,
-    "E₁₄ ≃ E₁₄ (Newton - Ros Camacho 2015)" => function()
+    "E₁₄ (v1) ≃ Q₁₀ (Newton - Ros Camacho 2015)" => function()
+        ThreeVariables.E₁₄{:v1}, ThreeVariables.Q₁₀
+    end,
+    "E₁₄ (v2) ≃ Q₁₀ (Newton - Ros Camacho 2015)" => function()
+        ThreeVariables.E₁₄{:v2}, ThreeVariables.Q₁₀
+    end,
+    "E₁₄ (v1) ≃ E₁₄ (v2) (Ros Camacho - Newton 2016)" => function()
         ThreeVariables.E₁₄{:v1}, ThreeVariables.E₁₄{:v2}
     end,
-    "U₁₂ ≃ U₁₂ (Newton - Ros Camacho 2015)" => function()
+    "Q₁₂ (v1) ≃ Q₁₂ (v2) (Ros Camacho - Newton 2016)" => function()
+        ThreeVariables.Q₁₂{:v1}, ThreeVariables.Q₁₂{:v2}
+    end,
+    "U₁₂ (v2) ≃ U₁₂ (v3) (Ros Camacho - Newton 2016)" => function()
+        ThreeVariables.U₁₂{:v2}, ThreeVariables.U₁₂{:v3}
+    end,
+    "U₁₂ (v1) ≃ U₁₂ (v3) (Ros Camacho - Newton 2016)" => function()
         ThreeVariables.U₁₂{:v1}, ThreeVariables.U₁₂{:v3}
     end,
-    "W₁₂ ≃ W₁₂ (Newton - Ros Camacho 2015)" => function()
+    "W₁₂ (v1) ≃ W₁₂ (v2) (Ros Camacho - Newton 2016)" => function()
         ThreeVariables.W₁₂{:v1}, ThreeVariables.W₁₂{:v2}
+    end,
+    "W₁₃ (v1) ≃ W₁₃ (v2) (Ros Camacho - Newton 2016)" => function()
+        ThreeVariables.W₁₃{:v1}, ThreeVariables.W₁₃{:v2}
+    end,
+    "Z₁₃ (v1) ≃ Z₁₃ (v2) (Ros Camacho - Newton 2016)" => function()
+        ThreeVariables.Z₁₃{:v1}, ThreeVariables.Z₁₃{:v2}
+    end,
+    "Q₁₈ ≃ E₃₀ (Kluck - Ros Camacho 2019)" => function()
+        ThreeVariables.Q₁₈, ThreeVariables.E₃₀
+    end,
+    "E₁₈ ≃ Q₁₂ (Kluck - Ros Camacho 2019)" => function()
+        ThreeVariables.E₁₈, ThreeVariables.Q₁₂
     end,
 ]
 
 const Positions = [
-    "Left => Right" => (leftvars, rightvars),
-    "Left => Middle" => (leftvars, middlevars),
+    "Left => Right"   => (leftvars,   rightvars),
+    "Left => Middle"  => (leftvars,   middlevars),
     "Middle => Right" => (middlevars, rightvars),
+    "Right => Left"   => (rightvars,  leftvars),
+    "Right => Middle" => (rightvars,  middlevars),
+    "Middle => Left"  => (middlevars, leftvars),
 ]
 
 function choose_equivalence()
@@ -67,5 +91,19 @@ function choose_equivalence()
     options = first.(Positions)
     ix = request(RadioMenu(options))
     leftvars, rightvars = last(Positions[ix])
-    return orbifold_equivalence(f, g, leftvars(f), rightvars(f))
+    return orbifold_equivalence(f, g, leftvars(f), rightvars(g))
+end
+
+function forequivalences(fn)
+    for (name, closure) in WellKnownEquivalences
+        method = methods(closure).ms[1]
+        if method.nargs == 1
+            potentials_list = [closure()]
+        else
+            potentials_list = [closure(n) for n in 3:6]
+        end
+        for (f, g) in potentials_list
+            fn(f, g)
+        end
+    end
 end

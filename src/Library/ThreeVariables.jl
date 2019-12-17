@@ -59,7 +59,7 @@ end
 struct W₁₃{variant} <: Potential{3}
     W₁₃() = W₁₃{:v1}()
     W₁₃{variant}() where variant = W₁₃{variant}(leftvars(3)...)
-    W₁₃{:v1}(x, y, z) = -x^2  + y^4   + y*z^4
+    W₁₃{:v1}(x, y, z) = x^2  + y^4   + y*z^4
     W₁₃{:v2}(x, y, z) = y*x^4 + y^2*z + z^2
     W₁₃{:v3}(x, y, z) = x^4*y + y^4   + z^2
 end

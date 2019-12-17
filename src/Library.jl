@@ -125,6 +125,8 @@ include("Library/ThreeVariables.jl")
 include("Library/CarquevilleRunkel2012.jl")
 include("Library/RecknagelWeinreb2017.jl")
 include("Library/NewtonRosCamacho2015.jl")
+include("Library/RosCamachoNewton2016.jl")
+include("Library/KluckRosCamacho2019.jl")
 include("Library/Interactive.jl")
 
 export orbifold_equivalence
