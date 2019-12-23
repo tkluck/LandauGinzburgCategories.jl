@@ -498,7 +498,7 @@ function fuse_abstract(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_t
         pow = 1
         while !iszero(rem(R(v)^pow, gr))
             pow += 1
-            pow > 30 && error("Power for computing Jacobian is too high; exiting")
+            pow > 30 && error("Power for computing Jacobian of $R/$f is too high; exiting")
         end
         lift = div(R(v)^pow, gr)*tr
         λ = one(A)⨷sum(prod, zip(lift, ∇B))
