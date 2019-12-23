@@ -106,7 +106,7 @@ Trace of a of ℤ/2-graded block matrix with the Koszul sign convention.
 """
 function supertrace(Q::AbstractMatrix)
     n,m = size(Q)
-    n == m && iseven(n) || throw(ArgumentError("Cannot compute supertrace of $n x $m matrix"))
+    (n == m && iseven(n)) || throw(ArgumentError("Cannot compute supertrace of $n x $m matrix"))
 
     firsthalf = diagind(Q)[1:end÷2]
     secondhalf = diagind(Q)[end÷2+1:end]
@@ -314,7 +314,7 @@ end
 
 function (op::RowOp)(M::AbstractMatrix)
     n, m = size(M)
-    (n == m && iseven(n) || throw(ArgumentError("Need square, even-rank matrix for applying MatrixFactorizations.RowOp"))
+    (n == m && iseven(n)) || throw(ArgumentError("Need square, even-rank matrix for applying MatrixFactorizations.RowOp"))
     res = copy(M)
     if op.source_row == 0
         res[op.target_row,:] *= op.target_factor
@@ -343,7 +343,7 @@ end
 
 function (op::ColOp)(M::AbstractMatrix)
     n, m = size(M)
-    (n == m && iseven(n) || throw(ArgumentError("Need square, even-rank matrix for applying MatrixFactorizations.ColOp"))
+    (n == m && iseven(n)) || throw(ArgumentError("Need square, even-rank matrix for applying MatrixFactorizations.ColOp"))
     res = copy(M)
     if op.source_col == 0
         res[:,op.target_col] *= op.target_factor
@@ -402,7 +402,7 @@ factors `-f`.
 """
 function dual(M::AbstractMatrix)
     n, m = size(M)
-    (n == m && iseven(n) || throw(ArgumentError("Need square, even-rank matrix for applying MatrixFactorizations.dual"))
+    (n == m && iseven(n)) || throw(ArgumentError("Need square, even-rank matrix for applying MatrixFactorizations.dual"))
 
     [
        M[1:end÷2, 1:end÷2]     M[end÷2+1:end, 1:end÷2]    ;
