@@ -8,11 +8,13 @@ import PolynomialRings: Polynomial, polynomial_ring
 import PolynomialRings: constant_coefficient, gröbner_transformation
 import PolynomialRings: map_coefficients, base_extend
 import PolynomialRings: ofminring, minring
-import PolynomialRings.Expansions: _expansion_types, expansion
+import PolynomialRings: gröbner_basis, lift, syzygies
+import PolynomialRings.Expansions: expansiontypes, expand
 import PolynomialRings.QuotientRings: QuotientRing
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.NamingSchemes: Named
 import PolynomialRings.Solve: matrix_solve_affine
+import PolynomialRings.Util: nzpairs, @showprogress
 
 # for clarity when calling collect() for its "side-effect"
 # of returning a dense vector/matrix.
@@ -411,13 +413,13 @@ function dual(M::AbstractMatrix)
 end
 
 function matrix_over_subring(M::AbstractMatrix, var, exp, substitution_var)
-    _, P = _expansion_types(eltype(M), MonomialOrder{:degrevlex, Named{(var,)}}())
+    _, P = expansiontypes(eltype(M), MonomialOrder{:degrevlex, Named{(var,)}}())
     R, (substitution_var_val,) = polynomial_ring(substitution_var, basering=Int)
     S = promote_type(P, R)
     res = spzeros(S, (exp .* size(M))...)
     for row = axes(M, 1), col = axes(M, 2)
         curblock = @view res[(row-1)*exp+1:row*exp, (col-1)*exp+1:col*exp]
-        for ((n,),c) in expansion(M[row, col], var)
+        for ((n,),c) in expand(M[row, col], var)
             for i = 0:exp-1
                 j = mod(i+n, exp)
                 curblock[j+1, i+1] += c*substitution_var_val^((n + i - j)÷exp)
