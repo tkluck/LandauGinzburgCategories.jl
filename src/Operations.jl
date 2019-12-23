@@ -2,7 +2,7 @@ module Operations
 
 import Combinatorics: permutations, parity
 import LinearAlgebra: I, diagind
-import SparseArrays: sparse, spzeros
+import SparseArrays: sparse, spzeros, issparse
 
 import PolynomialRings: Polynomial, polynomial_ring
 import PolynomialRings: constant_coefficient, gröbner_transformation
@@ -13,6 +13,7 @@ import PolynomialRings.Expansions: expansiontypes, expand
 import PolynomialRings.QuotientRings: QuotientRing
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.NamingSchemes: Named
+import PolynomialRings.Reductions: mingenerators
 import PolynomialRings.Solve: matrix_solve_affine
 import PolynomialRings.Util: nzpairs, @showprogress
 
@@ -436,47 +437,6 @@ function getpotential(A::AbstractMatrix)
     return f
 end
 
-small_fractions = [0//1;[a//b for a=-2000:2000 for b = 1:2000 if gcd(a,b) == 1]]
-sort!(small_fractions)
-function round_to_small_fraction(a::Rational)
-    ix = searchsortedfirst(small_fractions, a)
-    (ix <= 1 || ix >= length(small_fractions)) && throw(ErrorException())
-    below, above = small_fractions[ix-1:ix]
-    δ₂ = above - a
-    δ₁ = a - below
-    return δ₂ < δ₁ ? above : below
-end
-function find_zero_in_small_fractions(f, df, x0)
-    max_loops = 7
-    x = x0
-    for _ in 1:max_loops
-        f_x = f(x)
-        iszero(f_x) && return x
-        # Newton's method
-        δx = matrix_solve_affine(δx->df(x,δx), f_x, size(x))
-        x = x - δx
-
-        # after a sufficient number of iterations, we should be close enough
-        # that rounding to a small fraction gives a zero.
-        x_rounded = map_coefficients.(round_to_small_fraction, x)
-        iszero(f(x_rounded)) && return x_rounded
-    end
-    return nothing
-end
-
-function find_analytic_equality(f, y, df, x0)
-    max_loops = 7
-    x = x0
-    for _ in 1:max_loops
-        f_x = f(x)
-        f_x ≈ y && return x
-        # Newton's method
-        δx = matrix_solve_affine(δx->df(x,δx), f_x - y, size(x))
-        x = x - δx
-    end
-    return nothing
-end
-
 signedpermutations(A) = (((-1)^parity(σ), σ) for σ in permutations(eachindex(A)))
 
 """
@@ -521,32 +481,142 @@ function fuse_abstract(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_t
     e = (-1)^length(var_data) * p(λλ * At)
     QQQ = p(QQ)
 
+    @assert QQQ*e == e*QQQ "Internal error in LandauGinzburgCategories: computed non-morphism for e"
+    #h = matrix_solve_affine(h->QQQ*h + h*QQQ, e^2 - e, size(QQQ))
+    #@assert h != nothing "Internal error in LandauGinzburgCategories: computed a non-idempotent morphism for e"
     return QQQ, e
 end
 
 """
-    docstring goes here
+    A_B = fuse(A, B, vars_to_fuse...)
+
+Return a finite-rank representative of A⨶B by fusing the variables vars_to_fuse.
+
+This is a continuation of the result from fuse_abstract(A, B, vars_to_fuse...).
+Namely, we need to explicitly split the idempotent (in the category where
+morphisms are defined up to homotopy).
+
+Splitting e means finding an object AB and maps G, H such that
+
+AB * H = H * Q
+G * AB = Q * G
+AB^2 = f * I
+
+G*H = e    (up to homotopy)
+H*G = id   (up to homotopy)
+
+We're going to assume that e has a free image. Then we let H be the restriction
+of e to this image. G and AB are to be computed.
+
+``
+AB * H = H * Q      -- affine equation for AB
+``
+Under the assumption that e has a free image, the rows of H are linearly
+independent. Then a solution AB is unique if it exists.
+
+Now consider AB fixed.
+``
+G*H = e + Q*h + h*Q    -- affine equation for (G,h)
+G * AB = Q * G         -- another affine equation for G
+H*G = id + j*AB + AB*j -- affine equation for (G,j)
+``
+
+Considering this as two consecutive affine systems of equations,
+we can compute first ``AB`` and then ``(G,h,j)``. Since we are
+only interested in `AB`, the second computation is a verification.
 """
 function fuse(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_to_fuse...)
-    R = promote_type(eltype(A), eltype(B))
-    QQQ, e = fuse_abstract(A, B, var_to_fuse, vars_to_fuse)
-    QQQ = sparse(QQQ)
-    e = sparse(e)
+    Q, e = fuse_abstract(A, B, var_to_fuse, vars_to_fuse...)
 
-    h = matrix_solve_affine(h->QQQ*h + h*QQQ, e^2 - e, size(QQQ))
-    @assert h != nothing "e should be idempotent up to homotopy"
+    if e^2 == e # easy situation: idempotent is already strict
+        im = mingenerators(columns(e))
+        G = hcat(im...)
+        d = size(G, 2)
+        AB = matrix_solve_affine(AB -> G * AB, Q * G, (d, d))
+        return AB
+    end
 
-    f(b) = -b + h + e*b + b*e + (b^2*QQQ + QQQ*b^2)//2 + b*QQQ*b
-    df(b, xi) = -xi + e*xi + xi*e + ((b*xi + xi*b)*QQQ + QQQ*(b*xi + xi*b))//2 + xi*QQQ*b + b*QQQ*xi
-    b = find_analytic_zero(f, df, zero(h))
-    b === nothing && error("Failed to strictify e")
-    e_strict = e + QQQ*b + b*QQQ
-    @assert e_strict^2 == e_strict
+    N = e^2 - e
+    if iszero(N^20) # e^2 - e nilpotent; use Carqueville's formula
+        X = sum((-1)^(i+1) * binomial(2i, i) * N^i for i=1:19)//2
+        E = e + X * (I - 2e)
+        @assert iszero(E^2 - E)
 
-    # naive splitting of the idempotent
-    image = hcat(gröbner_basis(columns(e_strict))...)
-    d = size(image, 2)
-    return todense( matrix_solve_affine(Q -> image*Q, QQQ*image, (d,d)) )
+        im = mingenerators(columns(E))
+        G = hcat(im...)
+        d = size(G, 2)
+        AB = matrix_solve_affine(AB -> G * AB, Q * G, (d, d))
+        return AB
+    end
+
+    im = mingenerators(columns(e))
+    if issparse(e) # workaround for using GröbnerSingular
+        im = map(sparse, im)
+    end
+
+    # assumption: `im` is free
+    H = transpose(vcat(lift(im, tuple(columns(e)...))...))
+    @assert hcat(im...) * H == e
+
+    d = size(H, 1)
+    AB = matrix_solve_affine(AB -> AB * H, H * Q, (d, d))
+
+    n1, m1 = size(e)
+    m2, n2 = size(H)
+    n3, m3 = size(AB)
+
+    rhs = (e, spzeros(eltype(Q), n2, m2), one(AB))
+    lhs = let H=H, Q=Q, AB=AB # better performance for closure
+        lhs(G, h, j) = (G*H - Q*h - h*Q, G * AB - Q * G, H * G - j*AB - AB*j)
+    end
+
+    function flatten(a)
+        res = similar(a, length(a))
+        for (i, a_i) in nzpairs(a)
+            res[LinearIndices(a)[i]] = a_i
+        end
+        res
+    end
+    flatten(a, b...) = vcat(flatten(a), flatten(b...))
+
+    z1 = spzeros(eltype(Q), n2, m2)
+    z2 = spzeros(eltype(Q), size(Q)...)
+    z3 = spzeros(eltype(Q), size(AB)...)
+
+    basis1 = map(eachindex(z1)) do ix
+        b = copy(z1)
+        b[ix] = one(eltype(b))
+        b
+    end
+    basis2 = map(eachindex(z2)) do ix
+        b = copy(z2)
+        b[ix] = one(eltype(b))
+        b
+    end
+    basis3 = map(eachindex(z3)) do ix
+        b = copy(z3)
+        b[ix] = one(eltype(b))
+        b
+    end
+    basis1 = reshape(basis1, (length(basis1),))
+    basis2 = reshape(basis2, (length(basis2),))
+    basis3 = reshape(basis3, (length(basis3),))
+    srcbasis = vcat(
+        [(b, copy(z2), copy(z3)) for b in basis1],
+        [(copy(z1), b, copy(z3)) for b in basis2],
+        [(copy(z1), copy(z2), b) for b in basis3],
+    )
+
+    targetbasis = @showprogress "Flattening target basis: " map(b -> flatten(lhs(b...)...), srcbasis)
+
+    rhs = flatten(rhs...)
+    return AB, rhs, targetbasis
+
+    if AB^2 == (AB^2)[1,1]*I && iszero(rem(rhs, targetbasis))
+        return AB
+    else
+        error("Failed to find a homotopy representative, unfortunately")
+    end
 end
 
 function ⊕(A::AbstractMatrix, B::AbstractMatrix)
