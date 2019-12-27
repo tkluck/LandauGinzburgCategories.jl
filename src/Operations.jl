@@ -610,9 +610,8 @@ function fuse(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_to_fuse...
     targetbasis = @showprogress "Flattening target basis: " map(b -> flatten(lhs(b...)...), srcbasis)
 
     rhs = flatten(rhs...)
-    return AB, rhs, targetbasis
 
-    if AB^2 == (AB^2)[1,1]*I && iszero(rem(rhs, targetbasis))
+    if AB^2 == (AB^2)[1,1]*I && iszero(rem(rhs, gröbner_basis(targetbasis)))
         return AB
     else
         error("Failed to find a homotopy representative, unfortunately")
