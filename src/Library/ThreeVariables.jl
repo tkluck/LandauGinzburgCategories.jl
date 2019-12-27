@@ -14,6 +14,16 @@ struct E₁₄{variant} <: Potential{3}
     E₁₄{:v2}(x, y, z) = x^8   + y^3 + z^2
 end
 
+struct E₁₈ <: Potential{3}
+    E₁₈() = E₁₈(leftvars(3)...)
+    E₁₈(x, y, z) = x^5*z + y^3 + z^2
+end
+
+struct E₃₀ <: Potential{3}
+    E₃₀() = E₃₀(leftvars(3)...)
+    E₃₀(x, y, z) = x^8*z - y^3 - z^2
+end
+
 struct Q₁₀ <: Potential{3}
     Q₁₀() = Q₁₀(leftvars(3)...)
     Q₁₀(x, y, z) = x^4 + y^3 + x*z^2
@@ -29,6 +39,11 @@ struct Q₁₂{variant} <: Potential{3}
     Q₁₂{variant}() where variant = Q₁₂{variant}(leftvars(3)...)
     Q₁₂{:v1}(x, y, z) = x^3*z + y^3   + x*z^2
     Q₁₂{:v2}(x, y, z) = x^5   + y^3   + x*z^2
+end
+
+struct Q₁₈ <: Potential{3}
+    Q₁₈() = Q₁₈(leftvars(3)...)
+    Q₁₈(x, y, z) = x^8 + y^3 + x*z^2
 end
 
 struct S₁₁ <: Potential{3}

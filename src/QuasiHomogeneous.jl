@@ -1,9 +1,32 @@
 module QuasiHomogeneous
 
-import PolynomialRings: Polynomial, expand
+import PolynomialRings: Polynomial, expand, monomialtype
 
 Gradings{I<:Integer} = NamedTuple{Names, NTuple{N, I}} where {Names, N}
 
+function forgradedmonomials(f, total_grading, g::Gradings)
+    M = monomialtype(keys(g)...)
+    f′(e...) = f(M(e))
+    _forgradedmonomials(f′, total_grading, values(g))
+end
+
+function _forgradedmonomials(f, total_grading, g::NTuple{N, <:Integer}) where N
+    total_grading >= 0 || return
+    if length(g) < 1
+        return
+    elseif length(g) == 1
+        if total_grading % g[1] == 0
+            f(total_grading ÷ g[1])
+        end
+    else
+        for exp in 0:div(total_grading, g[1])
+            remaining = total_grading - g[1] * exp
+            _forgradedmonomials(remaining, g[2:end]) do (e...)
+                f(exp, e...)
+            end
+        end
+    end
+end
 
 """
     gradings = find_quasihomogeneous_degrees(f, vars...)
