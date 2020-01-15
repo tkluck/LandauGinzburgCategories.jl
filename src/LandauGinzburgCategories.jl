@@ -2,6 +2,7 @@
 module LandauGinzburgCategories
 
 include("QuasiHomogeneous.jl")
+include("MatrixUtil.jl")
 include("Operations.jl")
 include("OrbifoldEquivalence.jl")
 include("Library.jl")

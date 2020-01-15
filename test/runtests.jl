@@ -21,7 +21,7 @@ import LinearAlgebra: I
         Q, e = fuse_abstract(A, B, :y)
         @test Q^2 == (z^3 - x^3) * I
         @test Q*e == e*Q
-        # @test fuse(A, B, :y)^2 == (z^3 - x^3) * I
+        @test fuse(A, B, :y)^2 == (z^3 - x^3) * I
     end
 
     @testset "Library" begin

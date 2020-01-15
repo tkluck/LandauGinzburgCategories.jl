@@ -1,7 +1,7 @@
 module Operations
 
 import Combinatorics: permutations, parity
-import LinearAlgebra: I, diagind
+import LinearAlgebra: I, diagind, UpperTriangular
 import SparseArrays: sparse, spzeros, issparse
 
 import PolynomialRings: Polynomial, polynomial_ring
@@ -16,6 +16,8 @@ import PolynomialRings.NamingSchemes: Named
 import PolynomialRings.Reductions: mingenerators
 import PolynomialRings.Solve: matrix_solve_affine
 import PolynomialRings.Util: nzpairs, @showprogress
+
+import ..MatrixUtil: triangularperm, exactinv, exactsqrt
 
 # for clarity when calling collect() for its "side-effect"
 # of returning a dense vector/matrix.
@@ -528,94 +530,19 @@ only interested in `AB`, the second computation is a verification.
 function fuse(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_to_fuse...)
     Q, e = fuse_abstract(A, B, var_to_fuse, vars_to_fuse...)
 
-    if e^2 == e # easy situation: idempotent is already strict
-        im = mingenerators(columns(e))
-        G = hcat(im...)
-        d = size(G, 2)
-        AB = matrix_solve_affine(AB -> G * AB, Q * G, (d, d))
-        return AB
-    end
-
     N = e^2 - e
-    if iszero(N^20) # e^2 - e nilpotent; use Carqueville's formula
-        X = sum((-1)^(i+1) * binomial(2i, i) * N^i for i=1:19)//2
-        E = e + X * (I - 2e)
-        @assert iszero(E^2 - E)
+    J = triangularperm(N)
+    J′ = invperm(J)
 
-        im = mingenerators(columns(E))
-        G = hcat(im...)
-        d = size(G, 2)
-        AB = matrix_solve_affine(AB -> G * AB, Q * G, (d, d))
-        return AB
-    end
+    f = (I - exactinv(exactsqrt(UpperTriangular(I + 4N[J,J]))).data)[J′, J′]/2;
+    E = e + f * (I - 2e)
+    @assert iszero(E^2 - E)
 
-    im = mingenerators(columns(e))
-    if issparse(e) # workaround for using GröbnerSingular
-        im = map(sparse, im)
-    end
-
-    # assumption: `im` is free
-    H = transpose(vcat(lift(im, tuple(columns(e)...))...))
-    @assert hcat(im...) * H == e
-
-    d = size(H, 1)
-    AB = matrix_solve_affine(AB -> AB * H, H * Q, (d, d))
-
-    n1, m1 = size(e)
-    m2, n2 = size(H)
-    n3, m3 = size(AB)
-
-    rhs = (e, spzeros(eltype(Q), n2, m2), one(AB))
-    lhs = let H=H, Q=Q, AB=AB # better performance for closure
-        lhs(G, h, j) = (G*H - Q*h - h*Q, G * AB - Q * G, H * G - j*AB - AB*j)
-    end
-
-    function flatten(a)
-        res = similar(a, length(a))
-        for (i, a_i) in nzpairs(a)
-            res[LinearIndices(a)[i]] = a_i
-        end
-        res
-    end
-    flatten(a, b...) = vcat(flatten(a), flatten(b...))
-
-    z1 = spzeros(eltype(Q), n2, m2)
-    z2 = spzeros(eltype(Q), size(Q)...)
-    z3 = spzeros(eltype(Q), size(AB)...)
-
-    basis1 = map(eachindex(z1)) do ix
-        b = copy(z1)
-        b[ix] = one(eltype(b))
-        b
-    end
-    basis2 = map(eachindex(z2)) do ix
-        b = copy(z2)
-        b[ix] = one(eltype(b))
-        b
-    end
-    basis3 = map(eachindex(z3)) do ix
-        b = copy(z3)
-        b[ix] = one(eltype(b))
-        b
-    end
-    basis1 = reshape(basis1, (length(basis1),))
-    basis2 = reshape(basis2, (length(basis2),))
-    basis3 = reshape(basis3, (length(basis3),))
-    srcbasis = vcat(
-        [(b, copy(z2), copy(z3)) for b in basis1],
-        [(copy(z1), b, copy(z3)) for b in basis2],
-        [(copy(z1), copy(z2), b) for b in basis3],
-    )
-
-    targetbasis = @showprogress "Flattening target basis: " map(b -> flatten(lhs(b...)...), srcbasis)
-
-    rhs = flatten(rhs...)
-
-    if AB^2 == (AB^2)[1,1]*I && iszero(rem(rhs, gröbner_basis(targetbasis)))
-        return AB
-    else
-        error("Failed to find a homotopy representative, unfortunately")
-    end
+    im = mingenerators(columns(E))
+    G = hcat(im...)
+    d = size(G, 2)
+    AB = matrix_solve_affine(AB -> G * AB, Q * G, (d, d))
+    return AB
 end
 
 function ⊕(A::AbstractMatrix, B::AbstractMatrix)
