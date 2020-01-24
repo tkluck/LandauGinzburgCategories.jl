@@ -91,6 +91,11 @@ function choose_equivalence()
     options = first.(Positions)
     ix = request(RadioMenu(options))
     leftvars, rightvars = last(Positions[ix])
+
+    println("Use this line to programatically get this equivalence:")
+    println("")
+    println("    let f=$f, g=$g; orbifold_equivalence(f, g, $(nameof(leftvars))(f), $(nameof(rightvars))(g)); end")
+
     return orbifold_equivalence(f, g, leftvars(f), rightvars(g))
 end
 
