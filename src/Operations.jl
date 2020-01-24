@@ -17,7 +17,7 @@ import PolynomialRings.Reductions: mingenerators
 import PolynomialRings.Solve: matrix_solve_affine
 import PolynomialRings.Util: nzpairs, @showprogress
 
-import ..MatrixUtil: triangularperm, exactinv, exactsqrt
+import ..MatrixUtil: sweepconstants!, triangularperm, exactinv, exactsqrt, columns
 
 # for clarity when calling collect() for its "side-effect"
 # of returning a dense vector/matrix.
@@ -309,70 +309,6 @@ function block_diagonalization(X)
     D
 end
 
-struct RowOp
-    target_row::Int
-    target_factor
-    source_row::Int
-    source_factor
-end
-
-
-function (op::RowOp)(M::AbstractMatrix)
-    n, m = size(M)
-    (n == m && iseven(n)) || throw(ArgumentError("Need square, even-rank matrix for applying MatrixFactorizations.RowOp"))
-    res = copy(M)
-    if op.source_row == 0
-        res[op.target_row,:] *= op.target_factor
-        res[:,op.target_row] //= op.target_factor
-    elseif (op.target_row <= n÷2 && op.source_row <= n÷2) || (op.target_row > n÷2 && op.source_row > n÷2)
-        # row operation
-        target_topright = @view res[[op.target_row,op.source_row],:]
-        t = [op.target_factor op.source_factor; 0 1]
-        target_topright .= t * target_topright
-        # corresonding column operation in the other block
-        target_bottomleft = @view res[:,[op.target_row,op.source_row]]
-        t_inv = [1 -op.source_factor; 0 op.target_factor]//op.target_factor
-        target_bottomleft .= target_bottomleft * t_inv
-    else
-        throw(ArgumentError("MatrixFactorizations.RowOp needs to have both rows in the same graded block"))
-    end
-    return res
-end
-
-struct ColOp
-    target_col::Int
-    target_factor
-    source_col::Int
-    source_factor
-end
-
-function (op::ColOp)(M::AbstractMatrix)
-    n, m = size(M)
-    (n == m && iseven(n)) || throw(ArgumentError("Need square, even-rank matrix for applying MatrixFactorizations.ColOp"))
-    res = copy(M)
-    if op.source_col == 0
-        res[:,op.target_col] *= op.target_factor
-        res[op.target_col,:] //= op.target_factor
-    elseif (op.target_col <= n÷2 && op.source_col <= n÷2) || (op.target_col > n÷2 && op.source_col > n÷2)
-        # column operation
-        target_topright = @view res[:,[op.target_col,op.source_col]]
-        t = [op.target_factor 0; op.source_factor 1]
-        target_topright .= target_topright * t
-        # corresonding column operation in the other block
-        target_bottomleft = @view res[[op.target_col,op.source_col],:]
-        t_inv = [1 0; -op.source_factor op.target_factor]//op.target_factor
-        target_bottomleft .= t_inv * target_bottomleft
-    else
-        throw(ArgumentError("MatrixFactorizations.ColOp needs to have both rows in the same graded block"))
-    end
-    return res
-end
-
-RowOp(target_row, factor) = RowOp(target_row, factor, 0, 0)
-ColOp(target_col, factor) = ColOp(target_col, factor, 0, 0)
-RowOp(target_row, source_factor, source_row) = RowOp(target_row, 1, source_row, source_factor)
-ColOp(target_col, source_factor, source_col) = ColOp(target_col, 1, source_col, source_factor)
-
 struct RowSwap
     row1::Int
     row2::Int
@@ -415,17 +351,15 @@ function dual(M::AbstractMatrix)
     ]
 end
 
-function matrix_over_subring(M::AbstractMatrix, var, exp, substitution_var)
-    _, P = expansiontypes(eltype(M), MonomialOrder{:degrevlex, Named{(var,)}}())
-    R, (substitution_var_val,) = polynomial_ring(substitution_var, basering=Int)
-    S = promote_type(P, R)
-    res = spzeros(S, (exp .* size(M))...)
+function inflatepowers(M::AbstractMatrix, var, exp)
+    varval = eltype(M)(var)
+    res = spzeros(eltype(M), (exp .* size(M))...)
     for row = axes(M, 1), col = axes(M, 2)
         curblock = @view res[(row-1)*exp+1:row*exp, (col-1)*exp+1:col*exp]
         for ((n,),c) in expand(M[row, col], var)
             for i = 0:exp-1
                 j = mod(i+n, exp)
-                curblock[j+1, i+1] += c*substitution_var_val^((n + i - j)÷exp)
+                curblock[j+1, i+1] += c*varval^((n + i - j)÷exp)
             end
         end
     end
@@ -439,7 +373,17 @@ function getpotential(A::AbstractMatrix)
     return f
 end
 
+function iscomposable(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_to_fuse...)
+    vars_to_fuse = [var_to_fuse; vars_to_fuse...]
+
+    W = getpotential(A)
+    V = getpotential(B)
+
+    return all(iszero(diff(W + V, v)) for v in vars_to_fuse)
+end
+
 signedpermutations(A) = (((-1)^parity(σ), σ) for σ in permutations(eachindex(A)))
+
 
 """
     docstring goes here
@@ -448,9 +392,12 @@ function fuse_abstract(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_t
     vars_to_fuse = [var_to_fuse; vars_to_fuse...]
     Q = A⨶B
 
-    W, V = getpotential.((A,B))
-    f = V - constant_coefficient(V, vars_to_fuse...)
-    f = ofminring(f)
+    iscomposable(A, B, vars_to_fuse...) || error("These matrix factorizations are not composable along $(join(vars_to_fuse, ","))")
+
+    W = getpotential(A)
+    V = getpotential(B)
+    f = ofminring(V - constant_coefficient(V, vars_to_fuse...))
+
     R = base_extend(typeof(f))
     ∇f = [diff(f, v) for v in vars_to_fuse]
     ∇B = [diff(B, v) for v in vars_to_fuse]
@@ -470,14 +417,14 @@ function fuse_abstract(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_t
 
     function inflate(M)
         for (v, pow, t, λ) in var_data
-            M = matrix_over_subring(M, v, pow, t)
+            M = inflatepowers(M, v, pow)
         end
         M
     end
-    p(x) = x(; [t => 0 for (v, pow, t, λ) in var_data]...)
+    p(x) = constant_coefficient(x, vars_to_fuse...)
 
     QQ = inflate(Q)
-    At = -sum(ε * prod(diff(QQ, t) for (v, pow, t, λ) in var_data[σ])
+    At = -sum(ε * prod(diff(QQ, v) for (v, pow, t, λ) in var_data[σ])
               for (ε, σ) in signedpermutations(var_data))//factorial(length(var_data))
     λλ = inflate(prod(λ for (v, pow, t, λ) in var_data))
     e = (-1)^length(var_data) * p(λλ * At)
@@ -493,42 +440,16 @@ end
     A_B = fuse(A, B, vars_to_fuse...)
 
 Return a finite-rank representative of A⨶B by fusing the variables vars_to_fuse.
-
-This is a continuation of the result from fuse_abstract(A, B, vars_to_fuse...).
-Namely, we need to explicitly split the idempotent (in the category where
-morphisms are defined up to homotopy).
-
-Splitting e means finding an object AB and maps G, H such that
-
-AB * H = H * Q
-G * AB = Q * G
-AB^2 = f * I
-
-G*H = e    (up to homotopy)
-H*G = id   (up to homotopy)
-
-We're going to assume that e has a free image. Then we let H be the restriction
-of e to this image. G and AB are to be computed.
-
-``
-AB * H = H * Q      -- affine equation for AB
-``
-Under the assumption that e has a free image, the rows of H are linearly
-independent. Then a solution AB is unique if it exists.
-
-Now consider AB fixed.
-``
-G*H = e + Q*h + h*Q    -- affine equation for (G,h)
-G * AB = Q * G         -- another affine equation for G
-H*G = id + j*AB + AB*j -- affine equation for (G,j)
-``
-
-Considering this as two consecutive affine systems of equations,
-we can compute first ``AB`` and then ``(G,h,j)``. Since we are
-only interested in `AB`, the second computation is a verification.
 """
 function fuse(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_to_fuse...)
     Q, e = fuse_abstract(A, B, var_to_fuse, vars_to_fuse...)
+
+    sweepconstants!(Q, e, :u, :v, :x, :y)
+    relevantrows = filter(1 : size(Q, 1)) do i
+        count(!iszero, Q[i, :]) > 1 || count(!iszero, Q[:, i]) > 1
+    end
+    Q = Q[relevantrows, relevantrows]
+    e = e[relevantrows, relevantrows]
 
     N = e^2 - e
     J = triangularperm(N)
@@ -537,6 +458,13 @@ function fuse(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_to_fuse...
     f = (I - exactinv(exactsqrt(UpperTriangular(I + 4N[J,J]))).data)[J′, J′]/2;
     E = e + f * (I - 2e)
     @assert iszero(E^2 - E)
+
+    # J is reverse-sorted by degree. Experimentally, it's been useful
+    # to do the Gröbner basis computation with the lowest degree monomials
+    # as 'leading coefficients' for the module, so we use that order from
+    # now on.
+    E = E[reverse(J), reverse(J)]
+    Q = Q[reverse(J), reverse(J)]
 
     im = mingenerators(columns(E))
     G = hcat(im...)
@@ -561,21 +489,12 @@ function ⊞(A::AbstractMatrix, B::AbstractMatrix)
     return from_alternating_grades(C ⊕ D)
 end
 
-rows(M::AbstractMatrix) =    [transpose(M[i,:]) for i=axes(M,1)]
-columns(M::AbstractMatrix) = [M[:,i]  for i=axes(M,2)]
-topleft(M::AbstractMatrix)     = M[1:end÷2,     1:end÷2]
-topright(M::AbstractMatrix)    = M[1:end÷2,     end÷2+1:end]
-bottomleft(M::AbstractMatrix)  = M[end÷2+1:end, 1:end÷2]
-bottomright(M::AbstractMatrix) = M[end÷2+1:end, end÷2+1:end]
-
 export ⨷, ⨶, ⊞, ⊕
 export unit_matrix_factorization
 export block_diagonalization
 export rows, columns, topleft, topright, bottomleft, bottomright
 export RowOp, ColOp, RowSwap, ColSwap
 export dual
-export matrix_over_subring
-
 
 
 end
