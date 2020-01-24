@@ -6,7 +6,7 @@ import LinearAlgebra: checksquare, UpperTriangular
 import SparseArrays: dropzeros!, SparseMatrixCSC
 
 import DataStructures: DefaultDict
-import PolynomialRings: Polynomial, basering, deg
+import PolynomialRings: Polynomial, basering, deg, checkconstant
 
 struct ColOp{T}
     target    :: Int
@@ -204,9 +204,6 @@ function sweepconstants!(M::AbstractMatrix{<:Polynomial}, e, vars...)
     end
     return M
 end
-
-checkconstant(a::Number) = a
-checkconstant(f::Polynomial) = convert(basering(f), f)
 
 function exactsqrt(a::Integer)
     m = round(typeof(a), sqrt(a))
