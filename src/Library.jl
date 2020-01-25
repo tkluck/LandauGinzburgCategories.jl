@@ -51,17 +51,17 @@ function rightsyms(n::Integer)
 end
 
 function leftvars(spec)
-    _, vars = polynomial_ring(leftsyms(spec)...)
+    _, vars = polynomial_ring(leftsyms(spec)..., basering=Int)
     return vars
 end
 
 function middlevars(spec)
-    _, vars = polynomial_ring(middlesyms(spec)...)
+    _, vars = polynomial_ring(middlesyms(spec)..., basering=Int)
     return vars
 end
 
 function rightvars(spec)
-    _, vars = polynomial_ring(rightsyms(spec)...)
+    _, vars = polynomial_ring(rightsyms(spec)..., basering=Int)
     return vars
 end
 
