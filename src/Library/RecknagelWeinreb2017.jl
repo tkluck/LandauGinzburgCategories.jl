@@ -10,17 +10,21 @@ in a machine-readable way at
     https://nms.kcl.ac.uk/andreas.recknagel/oeq-page/defectslistforweb.txt
 """
 
-import PolynomialRings: Ideal, base_extend
+import PolynomialRings: Ideal, base_extend, @numberfield!
 
 import ..OrbifoldEquivalence: materialize_ansatz
 
 function _orbifold_equivalence_def(f::Type{TwoVariables.A₂A₂}, g::Type{TwoVariables.A₅}, left_vars, right_vars)
-    C = Complex{Int}
-    R = @ring! C[α, β][x,y,u,v]
+    F = @numberfield! ℚ[a1, a2, j] / (
+        j^2 + 1,
+        4a2^3 - 1,
+        a1^2 -3a2^2,
+    )
+    R = @ring! F[x,y,u,v]
 
     # compatibility with copy-pasted notation below
-    A = [α, β]
-    lookup = Dict(1:4 .=> (u,im*v,x,y)) # note sign difference in convention for A₅
+    A = [a1, a2]
+    lookup = Dict(1:4 .=> (u,j*v,x,y)) # note sign difference in convention for A₅
 
     Q = zeros(R, 4, 4)
     let a(i) = A[i], x(i) = lookup[i], (/,//) = (//,/)
@@ -35,8 +39,6 @@ function _orbifold_equivalence_def(f::Type{TwoVariables.A₂A₂}, g::Type{TwoVa
         Q[4,2]=-x(1)^2+x(3)*a(2)+x(4)*a(2)
     end
 
-    Q = materialize_ansatz(Q, g(u,v) - f(x,y), :x, :y, :u, :v)
-
     # express in the user's variables
     Q = Q(x=left_vars[1], y=left_vars[2], u=right_vars[1], v=right_vars[2])
 
@@ -44,14 +46,14 @@ function _orbifold_equivalence_def(f::Type{TwoVariables.A₂A₂}, g::Type{TwoVa
 end
 
 function _orbifold_equivalence_def(f::Type{TwoVariables.D₇}, g::Type{TwoVariables.E₆}, left_vars, right_vars)
-    R = @ring! ℚ[a[1:2]][x,y,u,v]
+    F = @numberfield! ℚ[β] / (β^8 - 162β^4 - 2187)
+    R = @ring! F[x,y,u,v]
 
     # compatibility with copy-pasted notation below
-    A = a
     lookup = Dict(1:4 .=> (u,v,-x,y)) # note sign difference in convention for D₇
 
     Q = zeros(R, 6, 6)
-    let a(i) = A[i], x(i) = lookup[i], (/,//) = (//,/)
+    let a(i) =  [3(β/3)^6/2 - 5(β/3)^2/2, β/3][i], x(i) = lookup[i], (/,//) = (//,/)
         # from https://nms.kcl.ac.uk/andreas.recknagel/oeq-page/defectslistforweb.txt
         Q[1,4]=(2*a(1)-a(2)^2)*x(3)
         Q[1,5]=x(2)
@@ -73,8 +75,6 @@ function _orbifold_equivalence_def(f::Type{TwoVariables.D₇}, g::Type{TwoVariab
         Q[6,3]=(2*a(1)-a(2)^2)*x(3)^3+x(2)^2+(-2*a(1)+a(2)^2)*x(1)*x(3)
     end
 
-    Q = materialize_ansatz(Q, g(u,v) - f(x,y), :x, :y, :u, :v)
-
     # express in the user's variables
     Q = Q(x=left_vars[1], y=left_vars[2], u=right_vars[1], v=right_vars[2])
 
@@ -82,10 +82,14 @@ function _orbifold_equivalence_def(f::Type{TwoVariables.D₇}, g::Type{TwoVariab
 end
 
 function _orbifold_equivalence_def(f::Type{TwoVariables.D₁₀}, g::Type{TwoVariables.E₇}, left_vars, right_vars)
-    R = @ring! ℚ[a[1:3]][x,y,u,v]
+    F = @numberfield! ℚ[a3] / (64a3^54 - 401808a3^36 + 29496a3^18 - 1)
+
+    R = @ring! F[x,y,u,v]
+    a2 = (-13246400a3^50 +  83164210912a3^32  - 6105637304a3^14)//360639
+    a1 = -64a3^52 + 401808a3^34 - 29496a3^16
 
     # compatibility with copy-pasted notation below
-    A = a
+    A = [a1, a2, a3]
     lookup = Dict(1:4 .=> (u,v,-x,y)) # note sign difference in convention for D₇
 
     Q = zeros(R, 4, 4)
@@ -100,8 +104,6 @@ function _orbifold_equivalence_def(f::Type{TwoVariables.D₁₀}, g::Type{TwoVar
         Q[4,1]=(3/2*a(1)^4+3*a(1)^2*a(2)+1/2*a(2)^2)*x(3)^5+(a(2))*x(2)*x(3)^3-x(2)^2*x(3)+(a(3))*x(3)*x(4)
         Q[4,2]=(-a(1)^3-2*a(1)*a(2))*x(3)^3+(a(1))*x(2)*x(3)+x(1)
     end
-
-    Q = materialize_ansatz(Q, g(u,v) - f(x,y), :x, :y, :u, :v)
 
     # express in the user's variables
     Q = Q(x=left_vars[1], y=left_vars[2], u=right_vars[1], v=right_vars[2])
