@@ -54,12 +54,12 @@ const WellKnownEquivalences = [
     "Z₁₃ (v1) ≃ Z₁₃ (v2) (Ros Camacho - Newton 2016)" => function()
         ThreeVariables.Z₁₃{:v1}, ThreeVariables.Z₁₃{:v2}
     end,
-    "Q₁₈ ≃ E₃₀ (Kluck - Ros Camacho 2019)" => function()
-        ThreeVariables.Q₁₈, ThreeVariables.E₃₀
-    end,
-    "E₁₈ ≃ Q₁₂ (Kluck - Ros Camacho 2019)" => function()
-        ThreeVariables.E₁₈, ThreeVariables.Q₁₂
-    end,
+    #"Q₁₈ ≃ E₃₀ (Kluck - Ros Camacho 2019)" => function()
+    #    ThreeVariables.Q₁₈, ThreeVariables.E₃₀
+    #end,
+    #"E₁₈ ≃ Q₁₂ (Kluck - Ros Camacho 2019)" => function()
+    #    ThreeVariables.E₁₈, ThreeVariables.Q₁₂
+    #end,
 ]
 
 const Positions = [
