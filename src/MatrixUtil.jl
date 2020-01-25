@@ -7,6 +7,7 @@ import SparseArrays: dropzeros!, SparseMatrixCSC
 
 import DataStructures: DefaultDict
 import PolynomialRings: Polynomial, basering, deg, checkconstant
+import ProgressMeter: Progress, update!, finish!
 
 struct ColOp{T}
     target    :: Int
@@ -175,14 +176,15 @@ function triangularperm(N::AbstractMatrix{<:Polynomial}, vars...)
     return I
 end
 
-function sweepconstants!(M::AbstractMatrix{<:Polynomial}, e, vars...)
+function sweepscalars!(M::AbstractMatrix{<:Polynomial}, e, vars...)
+    p = Progress(size(M, 2), 1, "Sweeping rows/columns containing a scalar")
     ix = findfirst(!iszero, M)
     #Msq = M^2
     while ix != nothing
         i, j = ix[1], ix[2]
+        update!(p, j)
         #if deg(M[ix], vars...) == 0
         if length(M[ix].monomials) == 1 && isone(M[ix].monomials[1])
-            @info "Sweeping row/col at $i,$j"
             op = RowOp(i, inv(M[ix]))
             conjugate!(M, op); conjugate!(e, op)
             for k in M[:, j].nzind
@@ -202,6 +204,7 @@ function sweepconstants!(M::AbstractMatrix{<:Polynomial}, e, vars...)
         end
         ix = findnext(!iszero, M, nextind(M, ix))
     end
+    finish!(p)
     return M
 end
 

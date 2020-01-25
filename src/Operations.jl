@@ -17,7 +17,7 @@ import PolynomialRings.Reductions: mingenerators
 import PolynomialRings.Solve: matrix_solve_affine
 import PolynomialRings.Util: nzpairs, @showprogress
 
-import ..MatrixUtil: sweepconstants!, triangularperm, exactinv, exactsqrt, columns
+import ..MatrixUtil: sweepscalars!, triangularperm, exactinv, exactsqrt, columns
 
 # for clarity when calling collect() for its "side-effect"
 # of returning a dense vector/matrix.
@@ -444,7 +444,7 @@ Return a finite-rank representative of A⨶B by fusing the variables vars_to_fus
 function fuse(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_to_fuse...)
     Q, e = fuse_abstract(A, B, var_to_fuse, vars_to_fuse...)
 
-    sweepconstants!(Q, e, :u, :v, :x, :y)
+    sweepscalars!(Q, e, :u, :v, :x, :y)
     relevantrows = filter(1 : size(Q, 1)) do i
         count(!iszero, Q[i, :]) > 1 || count(!iszero, Q[:, i]) > 1
     end
