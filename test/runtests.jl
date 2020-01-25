@@ -44,6 +44,20 @@ import LinearAlgebra: I
                 end
             end
         end
-
     end
+
+    @testset "Library fusions" begin
+        for (f, g, h) in [
+                (TwoVariables.D{4}, TwoVariables.A{5}, TwoVariables.A₂A₂),
+                (TwoVariables.A{11}, TwoVariables.D{7}, TwoVariables.E₆),
+                # too slow
+                #(TwoVariables.A{17}, TwoVariables.D{10}, TwoVariables.E₇),
+            ]
+            A = orbifold_equivalence(f, g, leftvars(f), middlevars(g))
+            B = orbifold_equivalence(g, h, middlevars(g), rightvars(h))
+            AB = fuse(A, B, middlesyms(g)...)
+            @test AB^2 == (h(rightvars(h)...) - f(leftvars(f)...)) * I
+        end
+    end
+
 end
