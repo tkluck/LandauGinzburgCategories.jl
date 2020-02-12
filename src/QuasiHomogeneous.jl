@@ -1,6 +1,6 @@
 module QuasiHomogeneous
 
-import PolynomialRings: Polynomial, expand, monomialtype
+import PolynomialRings: Polynomial, expand, monomialtype, polynomial_ring
 
 Gradings{I<:Integer} = NamedTuple{Names, NTuple{N, I}} where {Names, N}
 
@@ -74,6 +74,26 @@ function centralcharge(f, vars...)
     degs = find_quasihomogeneous_degrees(f, vars...)
     scale = 2//quasidegree(f, degs)
     return sum(1 - scale*d for d in values(degs))
+end
+
+function complete_quasihomogeneous_polynomial(f, gr::Gradings, next_coeff, d = quasidegree(f, gr))
+    P = promote_type(typeof(f), eltype(next_coeff))
+    result = P(f)
+    forgradedmonomials(d, gr) do m
+        if iszero(f[m])
+            result += next_coeff() * m
+        end
+    end
+    return result
+end
+
+function generic_quasihomogeneous_polynomial(grade::Integer, gr::Gradings, next_coeff)
+    R,_ = polynomial_ring(keys(gr)..., basering=Int)
+    return complete_quasihomogeneous_polynomial(zero(R), gr, next_coeff, grade)
+end
+
+function generic_quasihomogeneous_array(gradings::Array{<:Integer}, gr::Gradings, next_coeff)
+    return [ generic_quasihomogeneous_polynomial(grade, gr, next_coeff) for grade in gradings ]
 end
 
 end

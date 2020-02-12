@@ -15,21 +15,8 @@ import PolynomialRings: @polyvar
 import PolynomialRings.Util.LinAlgUtil: echelon
 import PolynomialRings.NamingSchemes: @namingscheme
 
-import ..QuasiHomogeneous: find_quasihomogeneous_degrees, quasidegree, forgradedmonomials, Gradings
+import ..QuasiHomogeneous: find_quasihomogeneous_degrees, quasidegree, forgradedmonomials, Gradings, complete_quasihomogeneous_polynomial
 import ..OrbifoldEquivalence: quantum_dimensions
-
-function complete_quasihomogeneous_polynomial(f, g::Gradings, next_coeff)
-    P = promote_type(typeof(f), eltype(next_coeff))
-    d = quasidegree(f, g)
-
-    result = P(f)
-    forgradedmonomials(d, g) do m
-        if iszero(f[m])
-            result += next_coeff() * m
-        end
-    end
-    return result
-end
 
 complete_with_generic_monomials(Q, g::Gradings, next_coeff) = complete_quasihomogeneous_polynomial.(Q, Ref(g), Ref(next_coeff))
 
