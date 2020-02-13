@@ -129,40 +129,6 @@ Landau Ginzburg models.
 ⨶(A,B) = A⨷one(B) + one(A)⨷B
 
 """
-    X⊗quotient_ring
-
-Matrix-representation of the operator obtained from ``X``, a matrix acting on a
-module over a ring ``R``, by tensoring (over ``R``) with a quotient of ``R``.
-
-Note that `eltype(X)` is not necessarily equal to ``R``; it may also be
-an ``R``-algebra. For example, ``R=k[y]`` and `eltype(X) == @ring(k[x,y])` works.
-"""
-function ⊗(X::AbstractMatrix{<:Polynomial}, quotient_ring::Type{<:QuotientRing})
-    X_inflated = representation_matrix.(quotient_ring, X)
-    flatten_blocks(X_inflated)
-end
-
-
-"""
-    Q,ϵ = ⨶(A,B,W,vars...)
-
-Finite-rank homotopy representation of ``A⨶B``, where we remove the variables
-`vars` from the result.
-
-We return a matrix factorization ``Q`` together with an idempotent ϵ representing
-the direct summand of ``Q`` that represents ``A⨶B``.
-
-See the pushforward paper by Dykerhoff&Murfet.
-"""
-function ⨶(A,B,W,vars...)
-    R,_ = polynomial_ring(vars...;basering=basering(W))
-    ∇W = diff.(W, vars)
-    Jacobian = R/Ideal(∇W...)
-
-    Q = (A⨶B) ⊗ Jacobian
-end
-
-"""
     unit_matrix_factorization(f; source_to_target...)
 
 A ℤ/2-graded matrix that squares to `f(;source_to_target...) - f` times
