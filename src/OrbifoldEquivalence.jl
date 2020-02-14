@@ -5,8 +5,12 @@ import LinearAlgebra: det, diagind, I
 
 import PolynomialRings: base_extend, coefficient, gröbner_transformation
 import PolynomialRings: constant_coefficient, flat_coefficients, Ideal
+import PolynomialRings: expansion, formal_coefficients
+import PolynomialRings.AbstractMonomials: any_divisor
+import PolynomialRings.NamingSchemes: namingscheme
 
 import ..Operations: supertrace, getpotential
+import ..QuasiHomogeneous: find_quasihomogeneous_degrees, quasidegree, generic_quasihomogeneous_array, centralcharge
 
 function multivariate_residue(g, f, vars...)
     R = base_extend(eltype(f))
@@ -89,8 +93,8 @@ function quantum_dimension(Q::AbstractMatrix, W, left_vars, right_vars)
     return ϵ * constant_coefficient(multivariate_residue(g, f, left_vars...), right_vars...)
 end
 
-function materialize_ansatz(Q, f, vars...)
-    shouldvanish = Q^2 - f*I
+function materialize_ansatz(Q, W, vars...)
+    shouldvanish = Q^2 - W*I
 
     iszero(shouldvanish) && return Q
 
@@ -99,11 +103,88 @@ function materialize_ansatz(Q, f, vars...)
     J = Ideal(eqns)
     R = P/J
 
-    if iszero(one(R))
-        error("Cannot materialize ansatz: it yields no solutions")
+    iszero(one(R)) && return nothing
+    return base_extend(Q, R)
+end
+
+"""
+    for gradings in weight_split_criterion_gradings(W, N, vars...)
     end
 
-    return base_extend(Q, R)
+Iterate over all grading matrices satisfying the weight split criterion
+from Recknagel-Weinreb (2017).
+"""
+function weight_split_criterion_gradings(W, N, vars...)
+    gr = find_quasihomogeneous_degrees(W, vars...)
+    Wgrading = quasidegree(W, gr)
+
+    monomials_in_W = [m for (m, c) in expansion(W, vars...)]
+
+    gradings_of_divisors = map(monomials_in_W) do m
+        gradings = Int[]
+        # abuse any_divisor for just looping over the divisors
+        any_divisor(m, namingscheme(vars...)) do divisor
+            if !isone(divisor) && m != divisor
+                d = sum(values(gr) .* divisor.e)
+                push!(gradings, d)
+            end
+            false
+        end
+        gradings
+    end
+
+    admissible_rows = Set{Vector{Int}}()
+
+    for divisor_grading_for_each_monomial in Iterators.product(gradings_of_divisors...)
+        unique_divisor_gradings = Set(divisor_grading_for_each_monomial)
+        if N == length(unique_divisor_gradings)
+            divisor_gradings = sort(collect(unique_divisor_gradings))
+            push!(admissible_rows, divisor_gradings)
+        elseif N > length(unique_divisor_gradings)
+            # FIXME: skipping this case for now
+        else
+            # not possitble
+        end
+    end
+
+    Iterators.Filter(!isnothing, Base.Generator(admissible_rows) do row
+        col = ntuple(i -> Wgrading - row[i], N)
+        if all( (row .+ (col[k] - col[1])) in admissible_rows for k = 2:N)
+            m = [ row[j] + (col[k] - col[1]) for j=1:N, k=1:N ]
+            n = [ col[k] + (row[j] - row[1]) for j=1:N, k=1:N ]
+            z = fill(-1, size(m))
+            [ z m; n z]
+        else
+            nothing
+        end
+    end)
+end
+
+function search_orbifold_equivalence(f, g, left_vars, right_vars; max_rank=10)
+    centralcharge(f, left_vars...) == centralcharge(g, right_vars...) || error("Cannot search orbifold equivalence if central charges disagree")
+    W = g - f
+    vgr = find_quasihomogeneous_degrees(W, left_vars..., right_vars...)
+    for N in 1 : max_rank
+        for gr in weight_split_criterion_gradings(W, N, left_vars..., right_vars...)
+            next_coeff = formal_coefficients(typeof(W), :c)
+
+            Q = generic_quasihomogeneous_array(gr, next_coeff)
+
+            qdim1, qdim2 = quantum_dimensions(Q, W, left_vars, right_vars)
+
+            if iszero(qdim1) || iszero(qdim2)
+                @info("Found an admissible grading distribution, but its quantum dimension vanishes identically")
+                continue
+            end
+
+
+            @info "Found an admissible grading distribution. Computing its Gröbner basis..."
+            if (Q = materialize_ansatz(Q, W, left_vars..., right_vars...)) |> !isnothing
+                return Q
+            end
+        end
+    end
+    return nothing
 end
 
 export supertrace, multivariate_residue, quantum_dimension, quantum_dimensions

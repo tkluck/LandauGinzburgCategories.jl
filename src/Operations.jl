@@ -9,7 +9,7 @@ import PolynomialRings: constant_coefficient, gröbner_transformation
 import PolynomialRings: map_coefficients, base_extend
 import PolynomialRings: ofminring, minring
 import PolynomialRings: gröbner_basis, lift, syzygies
-import PolynomialRings.Expansions: expansiontypes, expand
+import PolynomialRings.Expansions: expand
 import PolynomialRings.QuotientRings: QuotientRing
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.NamingSchemes: Named
