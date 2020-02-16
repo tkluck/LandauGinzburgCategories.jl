@@ -173,7 +173,7 @@ function _orbifold_equivalence_def(f::Type{ThreeVariables.W₁₃{:v1}}, g::Type
     R = promote_type(typeof.(left_vars)..., typeof.(right_vars)..., typeof(im))
 
     # compatibility with copy-pasted notation below
-    lookup = Dict(1:6 .=> R[right_vars; left_vars])
+    lookup = Dict{Any, Any}(1:6 .=> tuple(right_vars..., left_vars...))
     lookup[4] = im * lookup[4] # compatibility with different sign convention for W₁₃
     x(i) = lookup[i]
 
