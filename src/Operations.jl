@@ -12,7 +12,7 @@ import PolynomialRings: gröbner_basis, lift, syzygies
 import PolynomialRings.Expansions: expand
 import PolynomialRings.QuotientRings: QuotientRing
 import PolynomialRings.MonomialOrderings: MonomialOrder
-import PolynomialRings.NamingSchemes: Named
+import PolynomialRings.NamingSchemes: namingscheme
 import PolynomialRings.Reductions: mingenerators
 import PolynomialRings.Solve: matrix_solve_affine
 import PolynomialRings.Util: nzpairs, @showprogress
@@ -331,7 +331,7 @@ function fuse(A::AbstractMatrix, B::AbstractMatrix, vars_to_fuse...)
     e = e[relevantrows, relevantrows]
 
     N = e^2 - e
-    J = triangularperm(N)
+    J = triangularperm(N, namingscheme(eltype(Q)))
     J′ = invperm(J)
 
     f = (I - exactinv(exactsqrt(UpperTriangular(I + 4N[J,J]))).data)[J′, J′]/2;
