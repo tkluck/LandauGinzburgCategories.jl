@@ -6,7 +6,7 @@ import LinearAlgebra: checksquare, UpperTriangular
 import SparseArrays: dropzeros!, SparseMatrixCSC
 
 import DataStructures: DefaultDict
-import PolynomialRings: Polynomial, basering, deg, checkconstant
+import PolynomialRings: Polynomial, basering, deg, checkconstant, namingscheme, constant_coefficient
 import ProgressMeter: Progress, update!, finish!
 
 struct ColOp{T}
@@ -147,15 +147,18 @@ function triangularperm(N::AbstractMatrix{<:Polynomial}, vars...)
     return I
 end
 
-function sweepscalars!(M::AbstractMatrix{<:Polynomial}, e, vars...)
+isscalar(x) = false
+isscalar(::Number) = true
+isscalar(p::Polynomial) = deg(p, namingscheme(p)) <= 0 && isscalar(constant_coefficient(p, namingscheme(p)))
+
+function sweepscalars!(M::AbstractMatrix{<:Polynomial}, e)
     p = Progress(size(M, 2), 1, "Sweeping rows/columns containing a scalar")
     ix = findfirst(!iszero, M)
     #Msq = M^2
     while ix != nothing
         i, j = ix[1], ix[2]
         update!(p, j)
-        #if deg(M[ix], vars...) == 0
-        if length(M[ix].monomials) == 1 && isone(M[ix].monomials[1])
+        if isscalar(M[ix])
             op = RowOp(i, inv(M[ix]))
             conjugate!(M, op); conjugate!(e, op)
             for k in M[:, j].nzind

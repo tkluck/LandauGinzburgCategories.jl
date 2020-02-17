@@ -323,7 +323,7 @@ Return a finite-rank representative of A⨶B by fusing the variables vars_to_fus
 function fuse(A::AbstractMatrix, B::AbstractMatrix, vars_to_fuse...)
     Q, e = fuse_abstract(A, B, vars_to_fuse...)
 
-    sweepscalars!(Q, e, :u, :v, :x, :y)
+    sweepscalars!(Q, e)
     relevantrows = filter(1 : size(Q, 1)) do i
         count(!iszero, Q[i, :]) > 1 || count(!iszero, Q[:, i]) > 1
     end
