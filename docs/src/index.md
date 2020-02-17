@@ -16,11 +16,6 @@ at [Getting Started With `LandauGinzburgCategories.jl`](@ref).
 
 ## Limitations
 
-**Idempotent completion.** As the theory of these matrix factorizations
-requires an idempotent completion, not all operations can return an explicit
-matrix factorization. In many cases, a combination of a matrix factorization
-and an idempotent endomorphism is provided.
-
 **Expensive computations.** Many known orbifold equivalences are presented
 by way of an _Ansatz_ together with the verifiable statement that the
 resulting equations have a solution. We represent this by placing these
