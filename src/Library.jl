@@ -127,7 +127,6 @@ include("Library/Interactive.jl")
 
 export orbifold_equivalence
 export TwoVariables, ThreeVariables
-export leftsyms, middlesyms, rightsyms
 export leftvars, middlevars, rightvars
 export choose_equivalence
 
