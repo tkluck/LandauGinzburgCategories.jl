@@ -6,7 +6,7 @@ import SparseArrays: sparse, spzeros, issparse
 
 import PolynomialRings: Polynomial, polynomial_ring
 import PolynomialRings: constant_coefficient, gröbner_transformation
-import PolynomialRings: map_coefficients, base_extend
+import PolynomialRings: map_coefficients, base_extend, substitute
 import PolynomialRings: ofminring, minring
 import PolynomialRings: gröbner_basis, lift, syzygies
 import PolynomialRings.Expansions: expand
@@ -138,14 +138,14 @@ The source for this formulation is
 
 > Adjunctions and defects in Landau-Ginzburg models, Nils Carqueville and Daniel Murfet
 """
-function unit_matrix_factorization(f; source_to_target...)
+function unit_matrix_factorization(f, source_to_target...)
     source_to_target = collect(source_to_target)
     function ∂(f, n)
-        f₊ = f(; source_to_target[1:n - 1]...)
-        f₋ = f(; source_to_target[1:n    ]...)
+        f₊ = substitute(f, source_to_target[1:n - 1]...)
+        f₋ = substitute(f, source_to_target[1:n    ]...)
         x, y = source_to_target[n]
         num = f₊ - f₋
-        return div(num, typeof(num)(x) - typeof(num)(y))
+        return div(num, x - y)
     end
 
     # x represents, through its bit-representation, a basis element of the exterior
@@ -155,7 +155,7 @@ function unit_matrix_factorization(f; source_to_target...)
     # The use of 'gray code' (see wikipedia) ensures that subsequent elements differ by
     # exactly one bit. This way, rows/columns of our result matrix have _alternating_ signs.
     N = length(source_to_target)
-    R = promote_type(typeof(f), typeof(f(;source_to_target...)))
+    R = promote_type(typeof(f), typeof(substitute(f, source_to_target...)))
     gray_code(x) = xor(x, x>>1)
     permutation = map(n->gray_code(n)+1, 0:2^N-1)
     inv_perm = invperm(permutation)
@@ -235,14 +235,13 @@ function dual(M::AbstractMatrix)
 end
 
 function inflatepowers(M::AbstractMatrix, var, exp)
-    varval = eltype(M)(var)
     res = spzeros(eltype(M), (exp .* size(M))...)
     for row = axes(M, 1), col = axes(M, 2)
         curblock = @view res[(row-1)*exp+1:row*exp, (col-1)*exp+1:col*exp]
         for ((n,),c) in expand(M[row, col], var)
             for i = 0:exp-1
                 j = mod(i+n, exp)
-                curblock[j+1, i+1] += c*varval^((n + i - j)÷exp)
+                curblock[j+1, i+1] += c*var^((n + i - j)÷exp)
             end
         end
     end
@@ -256,9 +255,7 @@ function getpotential(A::AbstractMatrix)
     return f
 end
 
-function iscomposable(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_to_fuse...)
-    vars_to_fuse = [var_to_fuse; vars_to_fuse...]
-
+function iscomposable(A::AbstractMatrix, B::AbstractMatrix, vars_to_fuse...)
     W = getpotential(A)
     V = getpotential(B)
 
@@ -271,8 +268,7 @@ signedpermutations(A) = (((-1)^parity(σ), σ) for σ in permutations(eachindex(
 """
     docstring goes here
 """
-function fuse_abstract(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_to_fuse...)
-    vars_to_fuse = [var_to_fuse; vars_to_fuse...]
+function fuse_abstract(A::AbstractMatrix, B::AbstractMatrix, vars_to_fuse...)
     Q = A⨶B
 
     iscomposable(A, B, vars_to_fuse...) || error("These matrix factorizations are not composable along $(join(vars_to_fuse, ","))")
@@ -324,8 +320,8 @@ end
 
 Return a finite-rank representative of A⨶B by fusing the variables vars_to_fuse.
 """
-function fuse(A::AbstractMatrix, B::AbstractMatrix, var_to_fuse, vars_to_fuse...)
-    Q, e = fuse_abstract(A, B, var_to_fuse, vars_to_fuse...)
+function fuse(A::AbstractMatrix, B::AbstractMatrix, vars_to_fuse...)
+    Q, e = fuse_abstract(A, B, vars_to_fuse...)
 
     sweepscalars!(Q, e, :u, :v, :x, :y)
     relevantrows = filter(1 : size(Q, 1)) do i

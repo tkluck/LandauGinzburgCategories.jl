@@ -160,7 +160,7 @@ function _orbifold_equivalence_def(f::Type{TwoVariables.D₁₆}, g::Type{TwoVar
         Q[6,6]=0;
     end
 
-    Q = materialize_ansatz(Q, g(u,v) - f(x,y), :x, :y, :u, :v)
+    Q = materialize_ansatz(Q, g(u,v) - f(x,y), x, y, u, v)
 
     # express in the user's variables
     Q = Q(x=left_vars[1], y=left_vars[2], u=right_vars[1], v=right_vars[2])
@@ -241,7 +241,7 @@ function _orbifold_equivalence_def(f::Type{TwoVariables.E₁₃}, g::Type{TwoVar
         Q[6,3]=x(1)^2*x(4)^2*a(1)^2*a(4)^2-2*x(3)*x(4)^2*a(1)^2*a(4)^2*a(2)+x(1)^2*x(4)^2*a(1)*a(3)*a(4)+x(1)^2*x(4)^2*a(1)*a(4)^2+x(1)^2*x(4)^2*a(1)*a(4)*a(5)-x(3)*x(4)^2*a(1)*a(3)*a(4)*a(2)-2*x(3)*x(4)^2*a(1)*a(4)^2*a(2)-x(3)*x(4)^2*a(1)*a(4)*a(5)*a(2)+x(3)*x(4)^2*a(1)*a(4)^2*a(6)-x(1)^5*a(1)+x(1)^2*x(4)^2*a(4)*a(5)+x(1)^2*x(4)^2*a(5)^2-x(3)*x(4)^2*a(3)*a(4)*a(2)-x(1)^3*x(3)*a(1)*a(6)+x(3)*x(4)^2*a(4)^2*a(6)+x(3)*x(4)^2*a(4)*a(5)*a(6)+x(1)^5+x(1)^3*x(3)*a(2)+x(1)*x(3)^2*a(2)*a(6)-x(1)^2*x(4)^2*a(7)-x(3)*x(4)^2*a(6)*a(7)-x(1)*x(2)*x(4)*a(4)-x(1)*x(2)*x(4)*a(5)+x(2)^2;
     end
 
-    Q = materialize_ansatz(Q, g(u,v) - f(x,y), :x, :y, :u, :v)
+    Q = materialize_ansatz(Q, g(u,v) - f(x,y), x, y, u, v)
 
     # express in the user's variables
     Q = Q(x=left_vars[1], y=left_vars[2], u=right_vars[1], v=right_vars[2])
@@ -317,7 +317,7 @@ function _orbifold_equivalence_def(f::Type{ThreeVariables.Q₁₁}, g::Type{Thre
         Q[12,6]=x(1)^2*a(1)^2*a(2)^2-x(5);
     end
 
-    Q = materialize_ansatz(Q, g(u,v,w) - f(x,y,z), :x, :y, :z, :u, :v, :w)
+    Q = materialize_ansatz(Q, g(u,v,w) - f(x,y,z), x, y, z, u, v, w)
 
     # express in the user's variables
     Q = Q(x=left_vars[1], y=left_vars[2], z=left_vars[3], u=right_vars[1], v=right_vars[2], w=right_vars[3])

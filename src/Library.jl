@@ -109,15 +109,11 @@ function orbifold_equivalence(f::Type{<:Potential}, g::Type{<:Potential}, left_v
     return res
 end
 
-centralcharge(::Type{P}) where P <: Potential = centralcharge(P(leftvars(P)...), leftsyms(P)...)
+centralcharge(::Type{P}) where P <: Potential = centralcharge(P(leftvars(P)...), leftvars(P)...)
 
 function _orbifold_equivalence_def(::Type{P}, ::Type{P}, left_vars, right_vars) where P <: Potential
     # self-equivalence
-    n = numvars(P)
-    xsyms = [Symbol("x", i) for i in 1:n] # TODO: needs gensym() or some such
-    _, xvals = polynomial_ring(xsyms...)
-    res = unit_matrix_factorization(P(xvals...); (xsyms .=> right_vars)...)
-    res = res(; (xsyms .=> left_vars)...)
+    return unit_matrix_factorization(P(left_vars...), (left_vars .=> right_vars)...)
 end
 
 include("Library/TwoVariables.jl")
