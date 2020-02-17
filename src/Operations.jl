@@ -379,7 +379,7 @@ that represents `A ⨶ B`.
 ```jldoctest
 julia> using LandauGinzburgCategories, PolynomialRings;
 
-julia> @ring! Rational{Int}[x,y,z];
+julia> @ring! Int[x,y,z];
 
 julia> A = unit_matrix_factorization(x^3, x => y);
 
@@ -394,6 +394,10 @@ julia> fuse(A, B, y) |> collect
 """
 function fuse(A::AbstractMatrix, B::AbstractMatrix, vars_to_fuse...)
     Q, e = fuse_abstract(A, B, vars_to_fuse...)
+
+    # need divisibility for sweepscalars
+    Q = base_extend.(Q)
+    e = base_extend.(e)
 
     sweepscalars!(Q, e)
     relevantrows = filter(1 : size(Q, 1)) do i
@@ -417,8 +421,8 @@ function fuse(A::AbstractMatrix, B::AbstractMatrix, vars_to_fuse...)
     E = E[reverse(J), reverse(J)]
     Q = Q[reverse(J), reverse(J)]
 
-    im = mingenerators(columns(E))
-    G = hcat(im...)
+    img = mingenerators(columns(E))
+    G = hcat(img...)
     d = size(G, 2)
     AB = matrix_solve_affine(AB -> G * AB, Q * G, (d, d))
     return AB
