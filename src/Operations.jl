@@ -129,14 +129,27 @@ Landau Ginzburg models.
 ⨶(A,B) = A⨷one(B) + one(A)⨷B
 
 """
-    unit_matrix_factorization(f; source_to_target...)
+    unit_matrix_factorization(f, source_to_target...)
 
-A ℤ/2-graded matrix that squares to `f(;source_to_target...) - f` times
+A ℤ/2-graded matrix that squares to `substitute(f, source_to_target...) - f` times
 the identity matrix.
 
 The source for this formulation is
 
 > Adjunctions and defects in Landau-Ginzburg models, Nils Carqueville and Daniel Murfet
+
+# Examples
+```jldoctest
+julia> using LandauGinzburgCategories, PolynomialRings;
+
+julia> @ring! Int[x,y];
+
+julia> unit_matrix_factorization(x^3, x => y)
+2×2 Array{@ring(Int64[x,y]),2}:
+ 0       x^2 + x*y + y^2
+ -x + y  0
+
+```
 """
 function unit_matrix_factorization(f, source_to_target...)
     source_to_target = collect(source_to_target)
@@ -223,6 +236,30 @@ Return the dual (i.e. the adjoint) matrix factorization of `Q`.
 
 If `Q` factors the potential `f`, then this is a matrix factorization that
 factors `-f`.
+
+# Example
+```jldoctest
+julia> using LandauGinzburgCategories, PolynomialRings; @ring! Int[x,y]
+@ring(Int64[x,y])
+
+julia> Q = [0 x - y; x^2 + x*y + y^2 0];
+
+julia> Q^2
+2×2 Array{@ring(Int64[x,y]),2}:
+ x^3 + -y^3  0
+ 0           x^3 + -y^3
+
+julia> dual(Q)
+2×2 Array{@ring(Int64[x,y]),2}:
+ 0       x^2 + x*y + y^2
+ -x + y  0
+
+julia> dual(Q)^2
+2×2 Array{@ring(Int64[x,y]),2}:
+ -x^3 + y^3  0
+ 0           -x^3 + y^3
+
+```
 """
 function dual(M::AbstractMatrix)
     n, m = size(M)
@@ -266,7 +303,19 @@ signedpermutations(A) = (((-1)^parity(σ), σ) for σ in permutations(eachindex(
 
 
 """
-    docstring goes here
+    Q, e = fuse_abstract(A, B, vars_to_fuse...)
+
+Compute the finite-rank matrix factorization homotopy-equivalent to `A ⨶ B`
+according to the procedure made popular by
+
+> Dyckerhoff, Murfet [cite]
+
+`Q` is a finite-rank matrix factorization of `getpotential(A) + getpotential(B)`.
+`e` is an endomorphism (i.e. `Q*e == e*Q`) that is idempotent up to homotopy.
+A theorem by Dyckerhoff+Murfet ensures that any splitting of `e` is
+homotopy equivalent to `A ⨶ B`.
+
+In order to also compute the splitting, use the [`fuse`](@ref) function.
 """
 function fuse_abstract(A::AbstractMatrix, B::AbstractMatrix, vars_to_fuse...)
     Q = A⨶B
@@ -318,7 +367,30 @@ end
 """
     A_B = fuse(A, B, vars_to_fuse...)
 
-Return a finite-rank representative of A⨶B by fusing the variables vars_to_fuse.
+Compute the finite-rank matrix factorization homotopy-equivalent to `A ⨶ B`
+according to the procedure made popular by
+
+> Dyckerhoff, Murfet [cite]
+
+In constrast to [`fuse_abstract`](@ref), the result is a concrete matrix
+that represents `A ⨶ B`.
+
+# Examples
+```jldoctest
+julia> using LandauGinzburgCategories, PolynomialRings;
+
+julia> @ring! Rational{Int}[x,y,z];
+
+julia> A = unit_matrix_factorization(x^3, x => y);
+
+julia> B = unit_matrix_factorization(y^3, y => z);
+
+julia> fuse(A, B, y) |> collect
+2×2 Array{@ring(Rational{Int64}[x,z]),2}:
+ 0       x^2 + x*z + z^2
+ -x + z  0
+
+```
 """
 function fuse(A::AbstractMatrix, B::AbstractMatrix, vars_to_fuse...)
     Q, e = fuse_abstract(A, B, vars_to_fuse...)

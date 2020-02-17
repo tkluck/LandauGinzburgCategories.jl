@@ -10,7 +10,6 @@ config = (
         LandauGinzburgCategories.Library,
     ],
     repo     = "https://github.com/tkluck/LandauGinzburgCategories.jl.git",
-    doctest  = true,
     sitename = "LandauGinzburgCategories.jl",
     authors  = "Timo Kluck",
     pages    = [
@@ -26,14 +25,16 @@ makedocs(;
     format = Documenter.HTML(
         canonical = "http://tkluck.github.io/LandauGinzburgCategories.jl/stable/",
     ),
-    config...
+    doctest  = true,
+    config...,
 )
 
 makedocs(;
     format = LaTeX(
         platform = "docker",
     ),
-    config...
+    doctest = false,
+    config...,
 )
 
 deploydocs(
