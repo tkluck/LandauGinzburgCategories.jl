@@ -151,29 +151,46 @@ isscalar(x) = false
 isscalar(::Number) = true
 isscalar(p::Polynomial) = deg(p, namingscheme(p)) <= 0 && isscalar(constant_coefficient(p, namingscheme(p)))
 
-function sweepscalars!(M::AbstractMatrix{<:Polynomial}, e)
+"""
+    sweepscalars!(M::AbstractMatrix{<:Polynomial}, Ms...)
+
+For every entry of `M` for that is a scalar, sweep its row and column by
+conjugation operations, and apply the same operation to every matrix in `Ms`.
+
+When `M` is a matrix factorization, the sweep by conjugation operations means
+that a column operation on the top-right block is applied simultaneously with a
+row operation on the bottom-left block. The resulting matrix factorization
+is isomorphic to the original one.
+
+In a typical use case, `M` is a matrix factorization and `Ms` are morphisms.
+The result is that the matrices in `Ms` are pushed forward under the same
+isomorphism.
+"""
+function sweepscalars!(M::AbstractMatrix{<:Polynomial}, Ms...)
     p = Progress(size(M, 2), 1, "Sweeping rows/columns containing a scalar")
     ix = findfirst(!iszero, M)
-    #Msq = M^2
     while ix != nothing
         i, j = ix[1], ix[2]
         update!(p, j)
         if isscalar(M[ix])
             op = RowOp(i, inv(M[ix]))
-            conjugate!(M, op); conjugate!(e, op)
+            for m in (M, Ms...)
+                conjugate!(m, op)
+            end
             for k in M[:, j].nzind
                 k == i && continue
                 op = RowOp(k, -M[k, j], i)
-                conjugate!(M, op); conjugate!(e, op)
+                for m in (M, Ms...)
+                    conjugate!(m, op)
+                end
             end
             for k in M[i, :].nzind
                 k == j && continue
                 op = ColOp(k, -M[i, k], j)
-                conjugate!(M, op); conjugate!(e, op)
+                for m in (M, Ms...)
+                    conjugate!(m, op)
+                end
             end
-            #@assert sum(M[:, j]) == M[ix] == sum(M[i, :])
-            #@assert iszero(Msq - M^2)
-            #@assert M*e == e*M
             dropzeros!(M)
         end
         ix = findnext(!iszero, M, nextind(M, ix))
