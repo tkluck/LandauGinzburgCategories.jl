@@ -1,8 +1,10 @@
 using Documenter
+using DocumenterLaTeX
+
 using LandauGinzburgCategories
 using LandauGinzburgCategories.Library
 
-makedocs(
+config = (
     modules  = [
         LandauGinzburgCategories,
         LandauGinzburgCategories.Library,
@@ -18,10 +20,22 @@ makedocs(
         "Types and Functions" => "functions.md",
         "Reference Index"     => "reference.md",
     ],
+)
+
+makedocs(;
     format = Documenter.HTML(
         canonical = "http://tkluck.github.io/LandauGinzburgCategories.jl/stable/",
     ),
+    config...
 )
+
+makedocs(;
+    format = LaTeX(
+        platform = "docker",
+    ),
+    config...
+)
+
 deploydocs(
     repo   = "github.com/tkluck/LandauGinzburgCategories.jl.git",
     target = "build",
