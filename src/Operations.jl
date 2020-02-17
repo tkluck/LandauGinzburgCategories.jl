@@ -308,7 +308,7 @@ signedpermutations(A) = (((-1)^parity(σ), σ) for σ in permutations(eachindex(
 Compute the finite-rank matrix factorization homotopy-equivalent to `A ⨶ B`
 according to the procedure made popular by
 
-> Dyckerhoff, Murfet [cite]
+> Dyckerhoff, Tobias and Murfet, Daniel, "Pushing forward matrix factorizations", Duke Mathematical Journal 162, 7 (2013), pp. 1249--1311.
 
 `Q` is a finite-rank matrix factorization of `getpotential(A) + getpotential(B)`.
 `e` is an endomorphism (i.e. `Q*e == e*Q`) that is idempotent up to homotopy.
@@ -370,7 +370,7 @@ end
 Compute the finite-rank matrix factorization homotopy-equivalent to `A ⨶ B`
 according to the procedure made popular by
 
-> Dyckerhoff, Murfet [cite]
+> Dyckerhoff, Tobias and Murfet, Daniel, "Pushing forward matrix factorizations", Duke Mathematical Journal 162, 7 (2013), pp. 1249--1311.
 
 In constrast to [`fuse_abstract`](@ref), the result is a concrete matrix
 that represents `A ⨶ B`.
