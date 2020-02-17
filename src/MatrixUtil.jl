@@ -120,35 +120,6 @@ function _sparseapply!(M, op)
     M
 end
 
-function blockperm(N::AbstractMatrix)
-    blocks = DefaultDict{Int, Set{Int}}(i -> Set([i]), passkey=true)
-    while true
-        any_update = false
-        ix = findfirst(!iszero, N)
-        while ix != nothing
-            i, j = ix[1], ix[2]
-            a = blocks[i]
-            b = blocks[j]
-            if a !== b
-                union!(a, b)
-                for k in a
-                    blocks[k] = a
-                end
-                any_update = true
-            end
-
-            ix = findnext(!iszero, N, nextind(N, ix))
-        end
-        !any_update && break
-    end
-
-    I = Int[]
-    for b in unique(blocks[i] for i in 1 : max(size(N)...))
-        append!(I, b)
-    end
-    return I
-end
-
 function triangularperm(N::AbstractMatrix{<:Polynomial}, vars...)
     n = checksquare(N)
 
