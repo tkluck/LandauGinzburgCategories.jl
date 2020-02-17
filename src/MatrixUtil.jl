@@ -206,7 +206,7 @@ function exactsqrt(a::Integer)
     error("Cannot compute square root of $a")
 end
 
-exactsqrt(a::Number) = isone(a) ? a : error("Exact sqrt for $(typeof(a)) not implemented")
+exactsqrt(a::Number) = (iszero(a) || isone(a)) ? a : error("Exact sqrt for $(typeof(a)) not implemented")
 exactsqrt(a::Rational) = exactsqrt(numerator(a)) // exactsqrt(denominator(a))
 exactsqrt(f::Polynomial) = exactsqrt(checkconstant(f))
 
