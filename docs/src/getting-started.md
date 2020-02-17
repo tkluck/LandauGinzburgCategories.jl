@@ -6,7 +6,7 @@ Refer to [the Julia website](https://julialang.org/downloads/) for details on
 installing Julia. As soon as you have, start it and type `[` to get in
 package mode. Then, run
 ```julia-repl
-(v1.1) pkg> add https://github.com/tkluck/LandauGinzburgCategories.jl
+(v1.1) pkg> add https://github.com/tkluck/LandauGinzburgCategories.jl#release
 ```
 to install `LandauGinzburgCategories` and its dependencies. To test whether it worked,
 type
