@@ -1,12 +1,35 @@
 module QuasiHomogeneous
 
 import PolynomialRings: Polynomial, expand, monomialtype, polynomial_ring
+import PolynomialRings.Expansions: expansionorder
+import PolynomialRings.NamingSchemes: NamingScheme, namingscheme, num_variables
 
-Gradings{I<:Integer} = NamedTuple{Names, NTuple{N, I}} where {Names, N}
+struct Gradings{Scheme <: NamingScheme, N, I<:Integer}
+    scheme :: Scheme
+    grades :: NTuple{N, I}
+end
+
+namingscheme(g::Gradings) = g.scheme
+Base.values(g::Gradings) = g.grades
+function Base.show(io::IO, g::Gradings)
+    print(io, "Gradings(", g.scheme, ", ")
+    join(io, g.grades, ", ")
+    print(io, ")")
+end
+
+function Gradings(scheme::NamingScheme, grades::Integer...)
+    num_variables(scheme) == length(grades) || error("Gradings: need as many gradings as variables")
+    return Gradings(scheme, promote(grades...))
+end
+
+function Gradings(; kwds...)
+    scheme = namingscheme(keys(kwds.data)...)
+    return Gradings(scheme, values(kwds.data)...)
+end
 
 function forgradedmonomials(f, total_grading, g::Gradings)
-    M = monomialtype(keys(g)...)
-    f′(e...) = f(M(e))
+    M = monomialtype(namingscheme(g))
+    f′(e...) = f(exp(M, e))
     _forgradedmonomials(f′, total_grading, values(g))
 end
 
@@ -36,12 +59,12 @@ quasi-homogeneous polynomial with respect to these gradings, if such an
 assignment exists, and return it. Otherwise, raise an exception.
 
 # Example
-```
+```jldoctest
 julia> find_quasihomogeneous_degrees(x^4*y + x*y^9, :x, :y)
-(x = 8, y = 3)
+Gradings(x=8, y=3)
 ```
 """
-function find_quasihomogeneous_degrees(f::Polynomial, vars::Symbol...)
+function find_quasihomogeneous_degrees(f::Polynomial, vars...)
     exps = [e_i for (e,c) in expand(f, vars...) for e_i in e]
     exps = reshape(exps, (length(vars), div(length(exps), length(vars))))'
     exps = exps // 1
@@ -50,12 +73,27 @@ function find_quasihomogeneous_degrees(f::Polynomial, vars::Symbol...)
     k = lcm(map(denominator, gradings)...)
     gradings = numerator.(k .* gradings)
 
-    NamedTuple{vars}(tuple(gradings...))
+    Gradings(namingscheme(expansionorder(vars...)), gradings...)
 end
 
+"""
+    d = quasidegree(f::Polynomial, g::Gradings)
+
+The quasidegree of `f`, with variable gradings specified by `g`.
+
+# Example
+```jldoctest
+julia> using PolynomialRings, LandauGinzburgCategories
+
+julia> @ring! Int[x, y];
+
+julia> quasidegree(x^2 * y^3, (x=2, y=1))
+7
+```
+"""
 function quasidegree(f::Polynomial, g::Gradings)
     iszero(f) && return -1
-    maximum( sum(prod, zip(w, values(g))) for (w, p) in expand(f, keys(g)...) )
+    maximum( sum(prod, zip(w, values(g))) for (w, p) in expand(f, namingscheme(g)) )
 end
 
 """
@@ -69,6 +107,16 @@ This is the value of the expression
 
 where ``q_i`` is the grading of the ``i``th variable under
 a (ℚ-valued) grading for which `f` is homogeneous of degree 2.
+
+# Example
+```jldoctest
+julia> using PolynomialRings, LandauGinzburgCategories
+
+julia> @ring! Int[x, y];
+
+julia> centralcharge(x^5 + y^2, x, y)
+7
+```
 """
 function centralcharge(f, vars...)
     degs = find_quasihomogeneous_degrees(f, vars...)
@@ -88,7 +136,7 @@ function complete_quasihomogeneous_polynomial(f, gr::Gradings, next_coeff, d = q
 end
 
 function generic_quasihomogeneous_polynomial(grade::Integer, gr::Gradings, next_coeff)
-    R,_ = polynomial_ring(keys(gr)..., basering=Int)
+    R = polynomial_ring(namingscheme(gr), basering=Int)
     return complete_quasihomogeneous_polynomial(zero(R), gr, next_coeff, grade)
 end
 
