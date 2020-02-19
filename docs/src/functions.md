@@ -10,6 +10,9 @@ dual
 find_quasihomogeneous_degrees
 fuse
 fuse_abstract
+getpotential
+quasidegree
+quantum_dimensions
 unit_matrix_factorization
 ```
 
@@ -22,6 +25,9 @@ LandauGinzburgCategories.Library.Potential
 
 ## Internal functions
 ```@docs
+LandauGinzburgCategories.MatrixUtil.sweepscalars!
 LandauGinzburgCategories.Operations.flatten_blocks
-LandauGinzburgCategories.Operations.block_diagonalization
+LandauGinzburgCategories.Operations.supertrace
+LandauGinzburgCategories.OrbifoldEquivalence.multivariate_residue
+LandauGinzburgCategories.OrbifoldEquivalence.weight_split_criterion_gradings
 ```
