@@ -285,6 +285,13 @@ function inflatepowers(M::AbstractMatrix, var, exp)
     return res
 end
 
+"""
+    W = getpotential(A::AbstractMatrix)
+
+Assuming `A` is a matrix factorization, return the associated potential.
+It asserts that `A^2` is a scalar multiple of the identity and returns
+that scalar.
+"""
 function getpotential(A::AbstractMatrix)
     A_sq = A^2
     f = A_sq[1,1]
