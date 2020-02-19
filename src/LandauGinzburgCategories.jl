@@ -19,4 +19,7 @@ export getpotential
 export quantum_dimension, quantum_dimensions
 export Gradings, find_quasihomogeneous_degrees, quasidegree, centralcharge
 
+import PolynomialRings: @ring!, @ring
+export @ring!, @ring
+
 end # module
