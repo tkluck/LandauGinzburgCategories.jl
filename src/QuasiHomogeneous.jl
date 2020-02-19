@@ -1,6 +1,6 @@
 module QuasiHomogeneous
 
-import PolynomialRings: Polynomial, expand, monomialtype, polynomial_ring
+import PolynomialRings: Polynomial, AbstractMonomial, expand, monomialtype, polynomial_ring
 import PolynomialRings.Expansions: expansionorder
 import PolynomialRings.NamingSchemes: NamingScheme, namingscheme, num_variables
 
@@ -95,6 +95,8 @@ function quasidegree(f::Polynomial, g::Gradings)
     iszero(f) && return -1
     maximum( sum(prod, zip(w, values(g))) for (w, p) in expand(f, namingscheme(g)) )
 end
+
+quasidegree(f::AbstractMonomial, g::Gradings) = sum(exponents(f, namingscheme(g)) .* values(g))
 
 """
     c = centralcharge(f, vars...)

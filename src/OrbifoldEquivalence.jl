@@ -141,7 +141,7 @@ function weight_split_criterion_gradings(W, N, vars...)
         # abuse any_divisor for just looping over the divisors
         any_divisor(m, namingscheme(vars...)) do divisor
             if !isone(divisor) && m != divisor
-                d = sum(values(gr) .* divisor.e)
+                d = quasidegree(divisor, gr)
                 push!(gradings, d)
             end
             false
