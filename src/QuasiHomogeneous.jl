@@ -64,8 +64,12 @@ assignment exists, and return it. Otherwise, raise an exception.
 
 # Example
 ```jldoctest
+julia> using PolynomialRings, LandauGinzburgCategories
+
+julia> @ring! Int[x, y];
+
 julia> find_quasihomogeneous_degrees(x^4*y + x*y^9, :x, :y)
-Gradings(x=8, y=3)
+Gradings(x = 8, y = 3)
 ```
 """
 function find_quasihomogeneous_degrees(f::Polynomial, vars...)
@@ -91,7 +95,7 @@ julia> using PolynomialRings, LandauGinzburgCategories
 
 julia> @ring! Int[x, y];
 
-julia> quasidegree(x^2 * y^3, (x=2, y=1))
+julia> quasidegree(x^2 * y^3, Gradings(x=2, y=1))
 7
 ```
 """
@@ -121,7 +125,7 @@ julia> using PolynomialRings, LandauGinzburgCategories
 julia> @ring! Int[x, y];
 
 julia> centralcharge(x^5 + y^2, x, y)
-7
+3//5
 ```
 """
 function centralcharge(f, vars...)
