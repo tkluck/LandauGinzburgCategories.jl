@@ -26,6 +26,7 @@ makedocs(;
         canonical = "http://tkluck.github.io/LandauGinzburgCategories.jl/stable/",
     ),
     doctest  = true,
+    build = "buildhtml",
     config...,
 )
 
@@ -34,12 +35,13 @@ makedocs(;
         platform = "docker",
     ),
     doctest = false,
+    build = "buildpdf",
     config...,
 )
 
 deploydocs(
     repo   = "github.com/tkluck/LandauGinzburgCategories.jl.git",
-    target = "build",
+    target = "buildhtml",
     deps   = nothing,
     make   = nothing,
 )
