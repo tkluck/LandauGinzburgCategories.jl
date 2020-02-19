@@ -2,7 +2,7 @@ module QuasiHomogeneous
 
 import PolynomialRings: Polynomial, AbstractMonomial, expand, monomialtype, polynomial_ring
 import PolynomialRings.Expansions: expansionorder
-import PolynomialRings.NamingSchemes: NamingScheme, namingscheme, num_variables
+import PolynomialRings.NamingSchemes: NamingScheme, Named, namingscheme, num_variables, variablesymbols
 
 struct Gradings{Scheme <: NamingScheme, N, I<:Integer}
     scheme :: Scheme
@@ -15,6 +15,10 @@ function Base.show(io::IO, g::Gradings)
     print(io, "Gradings(", g.scheme, ", ")
     join(io, g.grades, ", ")
     print(io, ")")
+end
+function Base.show(io::IO, g::Gradings{<:Named})
+    ntup = NamedTuple{variablesymbols(namingscheme(g))}(values(g))
+    print(io, "Gradings", ntup)
 end
 
 function Gradings(scheme::NamingScheme, grades::Integer...)
