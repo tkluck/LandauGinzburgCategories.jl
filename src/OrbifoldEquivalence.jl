@@ -36,7 +36,7 @@ julia> @ring! Int[x,y];
 
 julia> multivariate_residue(3x^2*y^2, [x^3, y^3], x, y)
 3
-
+```
 """
 function multivariate_residue(g, f, vars...)
     R = mapreduce(minring, promote_type, f)
@@ -81,7 +81,7 @@ julia> Q = unit_matrix_factorization(x^5 - y^2, x => u, y => v);
 
 julia> quantum_dimensions(Q, (x,y), (u,v))
 (1, -1)
-
+```
 """
 function quantum_dimensions(Q::AbstractMatrix, left_vars, right_vars, W = getpotential(Q))
     lqdim = quantum_dimension(Q, W, left_vars, right_vars)
@@ -206,7 +206,7 @@ This uses the algorithm made popular by
 julia> @ring! Int[x,y];
 
 julia> search_orbifold_equivalence(x^3, 2y^3, (x,), (y,))
-
+```
 """
 function search_orbifold_equivalence(f, g, left_vars, right_vars; max_rank=10)
     if centralcharge(f, left_vars...) != centralcharge(g, right_vars...)
