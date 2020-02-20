@@ -39,6 +39,8 @@ import LinearAlgebra: I
 
         for (name, closure) in LandauGinzburgCategories.Library.WellKnownEquivalences
             @testset "$name" begin
+                @info "Testing $name equivalence"
+
                 method = methods(closure).ms[1]
                 if method.nargs == 1
                     @test orbifold_equivalence(closure()...) isa AbstractMatrix
@@ -58,6 +60,7 @@ import LinearAlgebra: I
                 # too slow
                 #(TwoVariables.A{17}, TwoVariables.D{10}, TwoVariables.E₇),
             ]
+            @info "Testing fusion of $f -> $g -> $h"
             A = orbifold_equivalence(f, g, leftvars(f), middlevars(g))
             B = orbifold_equivalence(g, h, middlevars(g), rightvars(h))
             AB = fuse(A, B, middlevars(g)...)
