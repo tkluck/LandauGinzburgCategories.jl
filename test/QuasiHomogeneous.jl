@@ -1,6 +1,6 @@
 using Test
 
-import PolynomialRings: namingscheme, @namingscheme, @ring!
+import PolynomialRings: namingscheme, @namingscheme, @ring!, @monomial
 import LandauGinzburgCategories.QuasiHomogeneous: Gradings, quasidegree, find_quasihomogeneous_degrees
 import LandauGinzburgCategories.QuasiHomogeneous: centralcharge, generic_quasihomogeneous_polynomial
 import LandauGinzburgCategories.QuasiHomogeneous: generic_quasihomogeneous_array
@@ -11,6 +11,7 @@ import LandauGinzburgCategories.QuasiHomogeneous: generic_quasihomogeneous_array
         gr = Gradings(x=3, y=4)
         @test namingscheme(gr) == @namingscheme((x,y))
         @test quasidegree(x^2 * y^4, gr) == 22
+        @test quasidegree(@monomial(x^2 * y^4), gr) == 22
 
         @test find_quasihomogeneous_degrees(x^4 + y^2, x, y) == Gradings(x=1, y=2)
         @test find_quasihomogeneous_degrees(x^4 + x*y^2, x, y) == Gradings(x=2, y=3)

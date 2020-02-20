@@ -1,6 +1,7 @@
 module QuasiHomogeneous
 
 import PolynomialRings: Polynomial, AbstractMonomial, expand, monomialtype, polynomial_ring
+import PolynomialRings.AbstractMonomials: exponents
 import PolynomialRings.Expansions: expansionorder
 import PolynomialRings.NamingSchemes: NamingScheme, Named, namingscheme, num_variables, variablesymbols
 
