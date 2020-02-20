@@ -13,6 +13,7 @@ fuse_abstract
 getpotential
 quasidegree
 quantum_dimensions
+search_orbifold_equivalence
 unit_matrix_factorization
 ```
 
