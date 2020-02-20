@@ -3,14 +3,18 @@ module OrbifoldEquivalence
 import SparseArrays: spzeros
 import LinearAlgebra: det, diagind, I
 
+import Combinatorics: with_replacement_combinations
+
 import PolynomialRings: base_extend, coefficient, gröbner_transformation
 import PolynomialRings: constant_coefficient, flat_coefficients, Ideal
 import PolynomialRings: expansion, formal_coefficients, xdivrem, ofminring, minring
+import PolynomialRings: to_dense_monomials
 import PolynomialRings.AbstractMonomials: any_divisor
-import PolynomialRings.NamingSchemes: namingscheme
+import PolynomialRings.Expansions: expansionorder
+import PolynomialRings.NamingSchemes: namingscheme, @namingscheme
 
 import ..Operations: supertrace, getpotential
-import ..QuasiHomogeneous: find_quasihomogeneous_degrees, quasidegree, generic_quasihomogeneous_array, centralcharge
+import ..QuasiHomogeneous: Gradings, find_quasihomogeneous_degrees, quasidegree, generic_quasihomogeneous_array, centralcharge, forgradedmonomials
 
 """
     r = multivariate_residue(g, f, vars...)
@@ -134,12 +138,19 @@ function weight_split_criterion_gradings(W, N, vars...)
     gr = find_quasihomogeneous_degrees(W, vars...)
     Wgrading = quasidegree(W, gr)
 
+    if isodd(Wgrading)
+        # ensure the quasidegree of a matrix factorization of
+        # W is an integer as well.
+        gr = Gradings(namingscheme(gr), (2 .* values(gr))...)
+        Wgrading = quasidegree(W, gr)
+    end
+
     monomials_in_W = [m for (m, c) in expansion(W, vars...)]
 
     gradings_of_divisors = map(monomials_in_W) do m
         gradings = Int[]
         # abuse any_divisor for just looping over the divisors
-        any_divisor(m, namingscheme(vars...)) do divisor
+        any_divisor(m, namingscheme(expansionorder(vars...))) do divisor
             if !isone(divisor) && m != divisor
                 d = quasidegree(divisor, gr)
                 push!(gradings, d)
@@ -149,42 +160,66 @@ function weight_split_criterion_gradings(W, N, vars...)
         gradings
     end
 
-    admissible_rows = Set{Vector{Int}}()
+    max_grading_diff_subsequent_rows = Wgrading ÷ 2
+    nontrivial_grades = filter(1 : N * max_grading_diff_subsequent_rows) do i
+        any_graded_monomial = false
+        forgradedmonomials(i, gr) do _
+            any_graded_monomial = true
+        end
+        any_graded_monomial
+    end
 
-    for divisor_grading_for_each_monomial in Iterators.product(gradings_of_divisors...)
-        unique_divisor_gradings = Set(divisor_grading_for_each_monomial)
-        if N == length(unique_divisor_gradings)
-            divisor_gradings = sort(collect(unique_divisor_gradings))
-            push!(admissible_rows, divisor_gradings)
-        elseif N > length(unique_divisor_gradings)
-            # FIXME: skipping this case for now
-        else
-            # not possitble
+    admissible_rows = Vector{Vector{Int}}()
+    for c in with_replacement_combinations(nontrivial_grades, N)
+        if all(any(x in c for x in g) for g in gradings_of_divisors)
+            push!(admissible_rows, c)
         end
     end
 
-    Iterators.Filter(!isnothing, Base.Generator(admissible_rows) do row
-        col = ntuple(i -> Wgrading - row[i], N)
-        if all( (row .+ (col[k] - col[1])) in admissible_rows for k = 2:N)
-            m = [ row[j] + (col[k] - col[1]) for j=1:N, k=1:N ]
-            n = [ col[k] + (row[j] - row[1]) for j=1:N, k=1:N ]
-            z = fill(-1, size(m))
-            [ z m; n z]
-        else
-            nothing
+    Iterators.Filter(!isnothing, Iterators.flatten(Base.Generator(admissible_rows) do row
+        Base.Generator(admissible_rows) do col
+            col = reverse(col)
+            if all( (row .+ (col[k] - col[1])) in admissible_rows for k = 2:N)
+                m = [ row[j] + (col[k] - col[1]) for j=1:N, k=1:N ]
+                n = Wgrading .- transpose(m)
+                z = fill(-1, size(m))
+                ([ z m; n z], gr)
+            else
+                nothing
+            end
         end
-    end)
+    end))
 end
 
-function search_orbifold_equivalence(f, g, left_vars, right_vars; max_rank=10)
-    centralcharge(f, left_vars...) == centralcharge(g, right_vars...) || error("Cannot search orbifold equivalence if central charges disagree")
-    W = g - f
-    vgr = find_quasihomogeneous_degrees(W, left_vars..., right_vars...)
-    for N in 1 : max_rank
-        for gr in weight_split_criterion_gradings(W, N, left_vars..., right_vars...)
-            next_coeff = formal_coefficients(typeof(W), :c)
+"""
+    search_orbifold_equivalence(f, g, left_vars, right_vars; max_rank=10)
 
-            Q = generic_quasihomogeneous_array(gr, next_coeff)
+Perform a brute-force search for an orbifold equivalence between f and g.
+
+This uses the algorithm made popular by
+
+> Recknagel, Andreas and Weinreb, Paul, "Orbifold equivalence: structure and
+> new examples", arXiv preprint arXiv:1708.08359 (2017).
+
+# Example
+```
+julia> @ring! Int[x,y];
+
+julia> search_orbifold_equivalence(x^3, 2y^3, (x,), (y,))
+
+"""
+function search_orbifold_equivalence(f, g, left_vars, right_vars; max_rank=10)
+    if centralcharge(f, left_vars...) != centralcharge(g, right_vars...)
+        @info "Central charges disagree; no orbifold equivalence exists"
+        return nothing
+    end
+    W = g - f
+    for N in 1 : max_rank
+        for (grading_matrix, gr) in weight_split_criterion_gradings(W, N, left_vars..., right_vars...)
+            next_coeff = formal_coefficients(typeof(W), :c)
+            c1 = next_coeff()
+
+            Q = generic_quasihomogeneous_array(grading_matrix, gr, next_coeff)
 
             qdim1, qdim2 = quantum_dimensions(Q, left_vars, right_vars, W)
             if iszero(qdim1) || iszero(qdim2)
@@ -192,11 +227,12 @@ function search_orbifold_equivalence(f, g, left_vars, right_vars; max_rank=10)
                 continue
             end
 
-
-            @info "Found an admissible grading distribution. Computing its Gröbner basis..."
-            if (Q = materialize_ansatz(Q, W, left_vars, right_vars, next_coeff())) |> !isnothing
+            @info "Found an admissible grading distribution. See if we can materialize it..." Q
+            if (Q = materialize_ansatz(Q, W, left_vars, right_vars, c1)) |> !isnothing
+                @info "Done"
                 return Q
             end
+            @info "We can't."
         end
     end
     return nothing
