@@ -7,6 +7,7 @@ import LinearAlgebra: I
 
 @testset "Landau-Ginzburg Categories" begin
     include("QuasiHomogeneous.jl")
+    include("cmdlineexample.jl")
 
     @testset "Tensor product fusion" begin
         R = @ring! ℚ[x,y,z]
