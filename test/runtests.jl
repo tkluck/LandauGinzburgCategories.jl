@@ -17,7 +17,7 @@ import LinearAlgebra: I
 
         @test A^2 == (y^3 - x^3) * I
         @test B^2 == (z^3 - y^3) * I
-        @test quantum_dimensions(A, [x], [y]) == (1, -1)
+        @test quantum_dimensions(A, (x,), (y,)) == (1, -1)
 
         @test (A ⨶ B)^2 == (z^3 - x^3) * I
 

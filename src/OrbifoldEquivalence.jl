@@ -8,7 +8,7 @@ import Combinatorics: with_replacement_combinations
 import PolynomialRings: base_extend, coefficient, gröbner_transformation
 import PolynomialRings: constant_coefficient, flat_coefficients, Ideal
 import PolynomialRings: expansion, formal_coefficients, xdivrem, ofminring, minring
-import PolynomialRings: to_dense_monomials
+import PolynomialRings: to_dense_monomials, polynomialtype, generators
 import PolynomialRings.AbstractMonomials: any_divisor
 import PolynomialRings.Expansions: expansionorder
 import PolynomialRings.NamingSchemes: namingscheme, @namingscheme
@@ -42,8 +42,8 @@ function multivariate_residue(g, f, vars...)
     R = mapreduce(minring, promote_type, f)
     R = base_extend(R)
     f = R.(f)
-    vars = R.(vars)
-    G, tr = gröbner_transformation(f)
+    vars = generators(polynomialtype(expansionorder(vars...)))
+    G, tr = gröbner_transformation(f) # TODO: pass the monomial order
 
     # TODO: compute that R/G is finite dimensional; otherwise, this computation
     # does not terminate
