@@ -4,9 +4,9 @@
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://tkluck.github.io/LandauGinzburgCategories.jl/latest)
 
 
-| **Build Status**                                                | **Test coverage**                                       |
-|:---------------------------------------------------------------:|:-------------------------------------------------------:|
-| [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] | [![Coverage Status][codecov-img]][codecov-url]      |
+| **Build Status**         | **Test coverage**                                 |
+|:------------------------:|:-------------------------------------------------:|
+| [![][c-i-img]][c-i-url]  | [![Coverage Status][codecov-img]][codecov-url]    |
 
 A library for algebra inside the bicategory of Landau-Ginzburg models.
 
@@ -86,11 +86,8 @@ This library has not been released yet and should therefore be considered alpha-
 
 If this library has been useful for your work, please cite it as https://arxiv.org/abs/1901.09019.
 
-[travis-img]: https://travis-ci.org/tkluck/LandauGinzburgCategories.jl.svg?branch=master
-[travis-url]: https://travis-ci.org/tkluck/LandauGinzburgCategories.jl
-
-[appveyor-img]: https://ci.appveyor.com/api/projects/status/4g6ax1ni7ijx3rn4?svg=true
-[appveyor-url]: https://ci.appveyor.com/project/tkluck/landauginzburgcategories-jl
+[c-i-img]: https://github.com/tkluck/LandauGinzburgCategories.jl/workflows/CI/badge.svg
+[c-i-url]: https://github.com/tkluck/LandauGinzburgCategories.jl/actions?query=workflow%3ACI
 
 [codecov-img]: https://codecov.io/gh/tkluck/LandauGinzburgCategories.jl/branch/master/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/tkluck/LandauGinzburgCategories.jl
