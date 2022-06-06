@@ -28,8 +28,8 @@ function Gradings(scheme::NamingScheme, grades::Integer...)
 end
 
 function Gradings(; kwds...)
-    scheme = namingscheme(keys(kwds.data)...)
-    return Gradings(scheme, values(kwds.data)...)
+    scheme = namingscheme(keys(kwds)...)
+    return Gradings(scheme, values(kwds)...)
 end
 
 function forgradedmonomials(f, total_grading, g::Gradings)
