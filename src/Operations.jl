@@ -417,8 +417,9 @@ function fuse(A::AbstractMatrix, B::AbstractMatrix, vars_to_fuse...)
     J = triangularperm(N, namingscheme(eltype(Q)))
     J′ = invperm(J)
 
-    f = (I - exactinv(exactsqrt(UpperTriangular(I + 4N[J,J]))).data)[J′, J′]/2;
-    E = e + f * (I - 2e)
+    II = one(eltype(e)) * I
+    f = (II - exactinv(exactsqrt(UpperTriangular(II + 4N[J,J]))).data)[J′, J′]/2;
+    E = e + f * (II - 2e)
     @assert iszero(E^2 - E)
 
     # J is reverse-sorted by degree. Experimentally, it's been useful
